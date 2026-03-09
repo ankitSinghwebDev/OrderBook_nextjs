@@ -7,6 +7,7 @@ import { connectDB } from '@/lib/mongodb';
 import User from '@/models/User';
 import { sendMail } from '@/lib/email';
 
+
 const APP_URL = process.env.APP_URL || 'http://localhost:3000';
 
 export async function POST(req) {
