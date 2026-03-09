@@ -3,6 +3,7 @@ import { MongoClient, ServerApiVersion } from 'mongodb';
 
 const FALLBACK_URI = 'mongodb://localhost:27017/purchase_order_db';
 const MONGODB_URI = process.env.MONGODB_URI || FALLBACK_URI;
+const IS_PROD = process.env.NODE_ENV === 'production';
 
 // Prefer explicit env db, else use db name from URI path, else fallback
 let uriDbName = null;
@@ -15,15 +16,8 @@ try {
 
 const MONGODB_DB = process.env.MONGODB_DB || uriDbName || 'purchase_order_db';
 
-if (!process.env.MONGODB_URI) {
-  if (process.env.NODE_ENV === 'production') {
-    throw new Error('MONGODB_URI is required in production');
-  } else {
-    console.warn(
-      '[mongodb] MONGODB_URI not set; using local fallback:',
-      FALLBACK_URI
-    );
-  }
+if (!process.env.MONGODB_URI && !IS_PROD) {
+  console.warn('[mongodb] MONGODB_URI not set; using local fallback:', FALLBACK_URI);
 }
 
 mongoose.set('strictQuery', true);
@@ -33,6 +27,9 @@ let mongoosePromise = globalThis._mongoosePromise;
 let mongooseConn = globalThis._mongooseConn;
 
 export async function connectDB() {
+  if (!process.env.MONGODB_URI && IS_PROD) {
+    throw new Error('MONGODB_URI is required in production at runtime');
+  }
   if (mongooseConn) return mongooseConn;
   if (!mongoosePromise) {
     mongoosePromise = mongoose
