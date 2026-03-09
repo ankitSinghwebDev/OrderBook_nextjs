@@ -24,7 +24,10 @@ export const metadata = {
 export default function RootLayout({ children }) {
   return (
     <html lang="en">
-      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
+      <body
+        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        suppressHydrationWarning
+      >
         <ThemeProvider>
           <div className="pointer-events-none fixed inset-0 -z-10 overflow-hidden">
             <div

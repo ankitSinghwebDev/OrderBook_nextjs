@@ -3,7 +3,17 @@ import { MongoClient, ServerApiVersion } from 'mongodb';
 
 const FALLBACK_URI = 'mongodb://localhost:27017/purchase_order_db';
 const MONGODB_URI = process.env.MONGODB_URI || FALLBACK_URI;
-const MONGODB_DB = process.env.MONGODB_DB || 'purchase_order_db';
+
+// Prefer explicit env db, else use db name from URI path, else fallback
+let uriDbName = null;
+try {
+  const parsed = new URL(MONGODB_URI);
+  uriDbName = parsed.pathname.replace('/', '') || null;
+} catch (err) {
+  uriDbName = null;
+}
+
+const MONGODB_DB = process.env.MONGODB_DB || uriDbName || 'purchase_order_db';
 
 if (!process.env.MONGODB_URI) {
   if (process.env.NODE_ENV === 'production') {

@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { useState } from 'react';
 import { useJoinWorkspaceMutation } from '@/store/apiSlice';
 import { useRouter } from 'next/navigation';
@@ -56,18 +57,20 @@ export default function Home() {
             Purchase Order helps teams create, approve, and reconcile spend with built-in workflows, real-time tracking, and a purchasing bot that answers supplier questions instantly.
           </p>
           <div className="flex flex-wrap gap-3">
-            <a
+            <Link
               href="/signup"
+              prefetch
               className="rounded-xl bg-white px-5 py-3 text-sm font-semibold text-indigo-700 shadow-md hover:shadow-lg hover:-translate-y-0.5 transition"
             >
               Create free account
-            </a>
-            <a
+            </Link>
+            <Link
               href="/login"
+              prefetch
               className="rounded-xl border border-white/40 px-5 py-3 text-sm font-semibold text-white hover:bg-white/10 transition"
             >
               Log in
-            </a>
+            </Link>
             <button
               type="button"
               onClick={() => setJoinOpen(true)}
@@ -125,20 +128,22 @@ export default function Home() {
             </li>
           </ul>
           <div className="mt-6 flex gap-3">
-            <a
+            <Link
               href="/signup"
+              prefetch
               className="rounded-lg px-4 py-2 text-white font-semibold transition"
               style={{ backgroundColor: "var(--accent)" }}
             >
               Sign up
-            </a>
-            <a
+            </Link>
+            <Link
               href="/login"
+              prefetch
               className="rounded-lg border px-4 py-2 font-semibold transition"
               style={{ borderColor: "var(--border)", color: "var(--foreground)", backgroundColor: "color-mix(in srgb, var(--card) 90%, transparent)" }}
             >
               Log in
-            </a>
+            </Link>
           </div>
         </div>
 
@@ -191,9 +196,10 @@ export default function Home() {
             { title: "All POs in the project", href: '/purchase-orders', desc: 'Search and filter every PO across your workspace.' },
             { title: 'Create approval levels', href: '/approvals/rules', desc: 'Set thresholds and multi-step workflows for spend control.' },
           ].map((item) => (
-            <a
+            <Link
               key={item.title}
               href={item.href}
+              prefetch
               className="rounded-xl border p-4 transition hover:-translate-y-0.5 hover:shadow-sm"
               style={{
                 backgroundColor: "color-mix(in srgb, var(--card) 94%, transparent)",
@@ -205,7 +211,7 @@ export default function Home() {
                 {item.title}
               </div>
               <div className="mt-2 text-xs text-[color:var(--muted)]">{item.desc}</div>
-            </a>
+            </Link>
           ))}
         </div>
       </section>

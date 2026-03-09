@@ -19,15 +19,19 @@ export async function POST(req) {
 
     const body = await req.json();
     const { email, password } = body || {};
+    const normalizedEmail = String(email || '').trim().toLowerCase();
 
-    if (!email || !password) {
+    if (!normalizedEmail || !password) {
       return NextResponse.json(
         { message: 'email and password are required' },
         { status: 400 }
       );
     }
 
-    const user = await User.findOne({ email });
+    // Case-insensitive lookup to support legacy records that weren't normalized
+    const user = await User.findOne({
+      email: { $regex: new RegExp(`^${normalizedEmail.replace(/[.*+?^${}()|[\\]\\\\]/g, '\\\\$&')}$`, 'i') },
+    });
     if (!user || !user.passwordHash) {
       return NextResponse.json({ message: 'Invalid credentials' }, { status: 401 });
     }
@@ -69,4 +73,3 @@ export async function POST(req) {
     );
   }
 }
-console.log('JWT secret length:', (process.env.JWT_SECRET || '').length);

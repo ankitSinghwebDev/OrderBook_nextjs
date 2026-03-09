@@ -1,3 +1,5 @@
+import Link from 'next/link';
+
 export default function PurchaseOrdersPage() {
   return (
     <div className="min-h-screen bg-[#f6f8fb] py-10">
@@ -11,9 +13,9 @@ export default function PurchaseOrdersPage() {
         <div className="rounded-2xl border border-slate-200 bg-white/80 p-6 shadow-sm">
           <p className="text-sm text-slate-700">
             No purchase orders to show yet. Click{" "}
-            <a href="/create-new-po" className="text-indigo-600 font-semibold hover:text-indigo-700">
+            <Link href="/create-new-po" prefetch className="text-indigo-600 font-semibold hover:text-indigo-700">
               Create a new PO
-            </a>{" "}
+            </Link>{" "}
             to get started.
           </p>
         </div>

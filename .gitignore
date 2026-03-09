@@ -1,2 +1,14 @@
 node_modules
 env
+.env
+.env.local
+.env.production
+.env.development
+.env.test
+.next
+out
+build
+dist
+coverage        
+.DS_Store
+*.log

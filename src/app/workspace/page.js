@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { setUser } from '@/store/userSlice';
@@ -142,9 +143,10 @@ export default function WorkspacePage() {
 
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {actions.map((item) => (
-            <a
+            <Link
               key={item.title}
               href={item.href}
+              prefetch
               className="rounded-xl border p-4 shadow-sm backdrop-blur transition hover:-translate-y-0.5"
               style={{
                 backgroundColor: "var(--card)",
@@ -156,7 +158,7 @@ export default function WorkspacePage() {
                 {item.title}
               </div>
               <div className="mt-2 text-xs text-[color:var(--muted)]">{item.desc}</div>
-            </a>
+            </Link>
           ))}
         </div>
 

@@ -11,15 +11,50 @@
       "static/chunks/main-app.js",
       "static/chunks/app/page.js"
     ],
+    "/workspace/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/workspace/page.js"
+    ],
     "/home/page": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
       "static/chunks/app/home/page.js"
     ],
+    "/login/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/login/page.js"
+    ],
     "/api/auth/login/route": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
       "static/chunks/app/api/auth/login/route.js"
+    ],
+    "/api/auth/logout/route": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/api/auth/logout/route.js"
+    ],
+    "/api/workspaces/[workspaceId]/members/route": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/api/workspaces/[workspaceId]/members/route.js"
+    ],
+    "/api/users/[id]/route": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/api/users/[id]/route.js"
+    ],
+    "/create-new-po/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/create-new-po/page.js"
+    ],
+    "/api/workspaces/join/route": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/api/workspaces/join/route.js"
     ]
   }
 }
