@@ -3,6 +3,8 @@
 ## Overview
 - Single Next.js 15 App Router app that serves both UI and APIs. No separate backend or TypeScript.
 - MongoDB (via Mongoose) for data; all API routes live under `src/app/api`.
+- Full endpoint-by-endpoint details live in `API_DOCUMENTATION.md` (HTTP methods, params, responses, and auth notes).
+- Postman collection lives in `postman/orderbook.postman_collection.json`; import it with `postman/orderbook_local.postman_environment.json` for local testing.
 
 ## Folder & File Guide
 - `src/app/layout.js` — Root HTML/body wrapper; loads global styles and header.
