@@ -73,7 +73,7 @@ export default function WorkspacePage() {
   };
 
   return (
-    <div className="relative min-h-screen overflow-hidden bg-gradient-to-b from-[var(--background)] via-[var(--background)] to-[color:var(--background)] py-10 transition-colors">
+    <div className="relative min-h-screen overflow-hidden bg-gradient-to-b from-[var(--background)] via-[var(--background)] to-[var(--background)] py-10 transition-colors">
       <div
         className="pointer-events-none absolute -left-24 top-10 h-72 w-72 rounded-full blur-3xl animate-orb"
         style={{ backgroundColor: "var(--accent-soft)" }}
@@ -89,13 +89,13 @@ export default function WorkspacePage() {
 
       <div className="relative mx-auto max-w-6xl px-6 space-y-8">
         <div className="space-y-3">
-          <p className="inline-flex items-center rounded-full border border-[var(--border)] bg-[color:var(--card)] px-4 py-1 text-xs font-semibold text-[color:var(--accent)] shadow-sm">
+          <p className="inline-flex items-center rounded-full border border-[var(--border)] bg-[var(--card)] px-4 py-1 text-xs font-semibold text-[var(--accent)] shadow-sm">
             Workspace
           </p>
-          <h1 className="text-3xl font-bold text-[color:var(--foreground)]">
+          <h1 className="text-3xl font-bold text-[var(--foreground)]">
             Purchase Order Workspace
           </h1>
-          <p className="text-[color:var(--muted)]">
+          <p className="text-[var(--muted)]">
             Choose an action to continue. Your most-used flows are one click away.
           </p>
         </div>
@@ -105,7 +105,7 @@ export default function WorkspacePage() {
           style={{ backgroundColor: "var(--card)", borderColor: "var(--border)" }}
         >
           {isLoading && !reduxUser ? (
-            <p className="text-sm text-[color:var(--muted)]">Loading your profile…</p>
+            <p className="text-sm text-[var(--muted)]">Loading your profile…</p>
           ) : reduxUser ? (
             <div className="flex items-center gap-3">
               <div
@@ -115,8 +115,8 @@ export default function WorkspacePage() {
                 {reduxUser.name?.[0]?.toUpperCase() || reduxUser.email?.[0]?.toUpperCase()}
               </div>
               <div>
-                <p className="text-sm font-semibold text-[color:var(--foreground)]">{reduxUser.name || 'User'}</p>
-                <p className="text-xs text-[color:var(--muted)]">{reduxUser.email}</p>
+                <p className="text-sm font-semibold text-[var(--foreground)]">{reduxUser.name || 'User'}</p>
+                <p className="text-xs text-[var(--muted)]">{reduxUser.email}</p>
               </div>
               {reduxUser?.isCreator && (
                 <div className="ml-auto">
@@ -132,7 +132,7 @@ export default function WorkspacePage() {
               )}
             </div>
           ) : (
-            <p className="text-sm text-[color:var(--muted)]">
+            <p className="text-sm text-[var(--muted)]">
               Not signed in.{" "}
               <a href="/login" className="font-semibold" style={{ color: "var(--accent)" }}>
                 Log in
@@ -153,11 +153,11 @@ export default function WorkspacePage() {
                 borderColor: "var(--border)",
               }}
             >
-              <div className="text-sm font-semibold text-[color:var(--foreground)] flex items-center gap-2">
+              <div className="text-sm font-semibold text-[var(--foreground)] flex items-center gap-2">
                 <span className="inline-block h-2 w-2 rounded-full" style={{ backgroundColor: "var(--accent)" }} />
                 {item.title}
               </div>
-              <div className="mt-2 text-xs text-[color:var(--muted)]">{item.desc}</div>
+              <div className="mt-2 text-xs text-[var(--muted)]">{item.desc}</div>
             </Link>
           ))}
         </div>

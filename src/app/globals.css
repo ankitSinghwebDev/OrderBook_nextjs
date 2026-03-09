@@ -54,7 +54,7 @@ body {
 
 /* Theme overrides for common utility classes so existing UI inherits theme/accent */
 :root .bg-indigo-600,
-:root .hover\\:bg-indigo-700:hover {
+:root .hover\:bg-indigo-700:hover {
   background-color: var(--accent) !important;
 }
 
@@ -63,7 +63,7 @@ body {
 }
 
 :root .text-indigo-600,
-:root .hover\\:text-indigo-700:hover {
+:root .hover\:text-indigo-700:hover {
   color: var(--accent) !important;
 }
 
@@ -72,8 +72,8 @@ body {
 }
 
 [data-theme="dark"] .bg-white,
-[data-theme="dark"] .bg-white\\/80,
-[data-theme="dark"] .bg-white\\/70,
+[data-theme="dark"] .bg-white\/80,
+[data-theme="dark"] .bg-white\/70,
 [data-theme="dark"] .bg-slate-50,
 [data-theme="dark"] .bg-slate-100 {
   background-color: var(--card) !important;

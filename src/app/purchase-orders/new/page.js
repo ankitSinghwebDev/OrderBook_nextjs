@@ -253,7 +253,7 @@ export default function NewPurchaseOrderPage() {
               </Space>
             }
           >
-            <div className="hidden md:grid grid-cols-12 gap-2 text-xs font-semibold text-[color:var(--muted)] mb-2">
+            <div className="hidden md:grid grid-cols-12 gap-2 text-xs font-semibold text-[var(--muted)] mb-2">
               <div className="col-span-3">Item</div>
               <div className="col-span-3">Description</div>
               <div className="col-span-2">Qty</div>
@@ -407,7 +407,7 @@ export default function NewPurchaseOrderPage() {
         onCancel={() => setBulkModalOpen(false)}
         okText="Add"
       >
-        <p className="text-sm text-[color:var(--muted)] mb-2">
+        <p className="text-sm text-[var(--muted)] mb-2">
           Paste lines in the format: <code>Name,Qty,Rate,Tax%</code>. One item per line.
         </p>
         <Input.TextArea

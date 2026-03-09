@@ -107,13 +107,13 @@ export default function Home() {
           className="rounded-2xl border p-6 shadow-sm transition-colors"
           style={{ backgroundColor: "var(--card)", borderColor: "var(--border)" }}
         >
-          <h2 className="text-xl font-semibold text-[color:var(--foreground)] mb-2">
+          <h2 className="text-xl font-semibold text-[var(--foreground)] mb-2">
             Sign up to get going
           </h2>
-          <p className="text-[color:var(--muted)] mb-4">
+          <p className="text-[var(--muted)] mb-4">
             Create an account to invite your team, set approval rules, and connect your suppliers.
           </p>
-          <ul className="space-y-3 text-[color:var(--foreground)]">
+          <ul className="space-y-3 text-[var(--foreground)]">
             <li className="flex items-start gap-2">
               <span className="mt-1 h-2 w-2 rounded-full" style={{ backgroundColor: "var(--accent)" }} />
               One-click purchase request creation
@@ -151,7 +151,7 @@ export default function Home() {
           className="rounded-2xl border p-6 shadow-sm transition-colors"
           style={{ backgroundColor: "var(--card)", borderColor: "var(--border)" }}
         >
-          <h2 className="text-xl font-semibold text-[color:var(--foreground)] mb-2">
+          <h2 className="text-xl font-semibold text-[var(--foreground)] mb-2">
             What you can do
           </h2>
           <div className="grid gap-3 sm:grid-cols-2">
@@ -170,7 +170,7 @@ export default function Home() {
               </div>
             ))}
           </div>
-          <p className="mt-4 text-sm text-[color:var(--muted)]">
+          <p className="mt-4 text-sm text-[var(--muted)]">
             Built for operations, finance, and procurement teams who need visibility without slowing down requests.
           </p>
         </div>
@@ -180,10 +180,10 @@ export default function Home() {
         className="rounded-2xl border p-6 shadow-sm transition-colors"
         style={{ backgroundColor: "var(--card)", borderColor: "var(--border)" }}
       >
-        <h2 className="text-xl font-semibold text-[color:var(--foreground)] mb-4">
+        <h2 className="text-xl font-semibold text-[var(--foreground)] mb-4">
           Your purchase order workspace
         </h2>
-        <p className="text-sm text-[color:var(--muted)] mb-4">
+        <p className="text-sm text-[var(--muted)] mb-4">
           Jump into the core flows right after you log in.
         </p>
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -206,11 +206,11 @@ export default function Home() {
                 borderColor: "var(--border)",
               }}
             >
-              <div className="text-sm font-semibold text-[color:var(--foreground)] flex items-center gap-2">
+              <div className="text-sm font-semibold text-[var(--foreground)] flex items-center gap-2">
                 <span className="inline-block h-2 w-2 rounded-full" style={{ backgroundColor: "var(--accent)" }} />
                 {item.title}
               </div>
-              <div className="mt-2 text-xs text-[color:var(--muted)]">{item.desc}</div>
+              <div className="mt-2 text-xs text-[var(--muted)]">{item.desc}</div>
             </Link>
           ))}
         </div>
@@ -221,7 +221,7 @@ export default function Home() {
         className="rounded-2xl border p-6 shadow-sm transition-colors"
         style={{ backgroundColor: "var(--card)", borderColor: "var(--border)" }}
       >
-        <h2 className="text-xl font-semibold text-[color:var(--foreground)] mb-4">
+        <h2 className="text-xl font-semibold text-[var(--foreground)] mb-4">
           FAQs
         </h2>
         <div className="divide-y" style={{ borderColor: "var(--border)" }}>
@@ -247,13 +247,13 @@ export default function Home() {
               key={item.q}
               className="group py-3"
             >
-              <summary className="flex cursor-pointer items-center justify-between text-sm font-semibold text-[color:var(--foreground)]">
+              <summary className="flex cursor-pointer items-center justify-between text-sm font-semibold text-[var(--foreground)]">
                 {item.q}
-                <span className="text-[color:var(--muted)] group-open:rotate-45 transition">
+                <span className="text-[var(--muted)] group-open:rotate-45 transition">
                   +
                 </span>
               </summary>
-              <p className="mt-2 text-sm text-[color:var(--muted)]">{item.a}</p>
+              <p className="mt-2 text-sm text-[var(--muted)]">{item.a}</p>
             </details>
           ))}
         </div>
@@ -264,10 +264,10 @@ export default function Home() {
           className="rounded-2xl border p-6 shadow-sm transition-colors"
           style={{ backgroundColor: "var(--card)", borderColor: "var(--border)" }}
         >
-          <h3 className="text-lg font-semibold text-[color:var(--foreground)] mb-2">
+          <h3 className="text-lg font-semibold text-[var(--foreground)] mb-2">
             About us
           </h3>
-          <p className="text-sm text-[color:var(--muted)]">
+          <p className="text-sm text-[var(--muted)]">
             We’re a small team from ops and finance backgrounds. Our mission: make purchasing transparent, fast, and audit-ready without adding headcount.
           </p>
         </div>
@@ -275,10 +275,10 @@ export default function Home() {
           className="rounded-2xl border p-6 shadow-sm transition-colors"
           style={{ backgroundColor: "var(--card)", borderColor: "var(--border)" }}
         >
-          <h3 className="text-lg font-semibold text-[color:var(--foreground)] mb-2">
+          <h3 className="text-lg font-semibold text-[var(--foreground)] mb-2">
             Quick start guide
           </h3>
-          <ol className="list-decimal list-inside space-y-2 text-sm text-[color:var(--foreground)]">
+          <ol className="list-decimal list-inside space-y-2 text-sm text-[var(--foreground)]">
             <li>Sign up and verify your email.</li>
             <li>Create your first approval rule (amount threshold).</li>
             <li>Add a supplier and submit a PO request.</li>
@@ -293,10 +293,10 @@ export default function Home() {
       >
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div>
-            <h3 className="text-lg font-semibold text-[color:var(--foreground)]">
+            <h3 className="text-lg font-semibold text-[var(--foreground)]">
               Connect with us
             </h3>
-            <p className="text-sm text-[color:var(--muted)]">
+            <p className="text-sm text-[var(--muted)]">
               Have questions or need a walkthrough? We’ll respond within one business day.
             </p>
           </div>
