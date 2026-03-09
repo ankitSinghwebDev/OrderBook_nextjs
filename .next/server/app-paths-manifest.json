@@ -1,5 +1,4 @@
 {
   "/create-new-po/page": "app/create-new-po/page.js",
-  "/page": "app/page.js",
   "/home/page": "app/home/page.js"
 }
