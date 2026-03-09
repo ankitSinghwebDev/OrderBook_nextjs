@@ -7,7 +7,14 @@ import { useRouter } from 'next/navigation';
 
 export default function Home() {
   const [joinOpen, setJoinOpen] = useState(false);
-  const [form, setForm] = useState({ name: '', email: '', role: '', joinCode: '' });
+  const [form, setForm] = useState({
+    name: '',
+    email: '',
+    role: '',
+    joinCode: '',
+    password: '',
+    confirmPassword: '',
+  });
   const [joinWorkspace, { isLoading: joining }] = useJoinWorkspaceMutation();
   const [joinMessage, setJoinMessage] = useState('');
   const router = useRouter();
@@ -17,12 +24,21 @@ export default function Home() {
   const handleJoin = async (e) => {
     e.preventDefault();
     setJoinMessage('');
+    if (form.password.length < 8) {
+      setJoinMessage('Password must be at least 8 characters.');
+      return;
+    }
+    if (form.password !== form.confirmPassword) {
+      setJoinMessage('Passwords do not match.');
+      return;
+    }
     try {
       const res = await joinWorkspace({
         name: form.name,
         email: form.email,
         role: form.role,
         joinCode: form.joinCode,
+        password: form.password,
       }).unwrap();
       if (res?.user?._id) {
         window.localStorage.setItem('isAuthed', 'true');
@@ -394,6 +410,37 @@ export default function Home() {
                   className="mt-1 w-full rounded-md border px-3 py-2"
                   style={{ borderColor: 'var(--border)', backgroundColor: 'color-mix(in srgb, var(--card) 94%, transparent)', color: 'var(--foreground)' }}
                 />
+              </div>
+              <div className="grid gap-3 sm:grid-cols-2">
+                <div>
+                  <label className="block text-sm font-medium" style={{ color: 'var(--foreground)' }}>
+                    Set password (for future logins)
+                  </label>
+                  <input
+                    type="password"
+                    required
+                    minLength={8}
+                    value={form.password}
+                    onChange={(e) => updateField('password', e.target.value)}
+                    className="mt-1 w-full rounded-md border px-3 py-2"
+                    placeholder="Min 8 characters"
+                    style={{ borderColor: 'var(--border)', backgroundColor: 'color-mix(in srgb, var(--card) 94%, transparent)', color: 'var(--foreground)' }}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium" style={{ color: 'var(--foreground)' }}>
+                    Confirm password
+                  </label>
+                  <input
+                    type="password"
+                    required
+                    minLength={8}
+                    value={form.confirmPassword}
+                    onChange={(e) => updateField('confirmPassword', e.target.value)}
+                    className="mt-1 w-full rounded-md border px-3 py-2"
+                    style={{ borderColor: 'var(--border)', backgroundColor: 'color-mix(in srgb, var(--card) 94%, transparent)', color: 'var(--foreground)' }}
+                  />
+                </div>
               </div>
               <button
                 type="submit"

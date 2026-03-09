@@ -1,11 +1,11 @@
 // POST /api/workspaces/join - join a workspace using a join code
 import { NextResponse } from 'next/server';
+import mongoose from 'mongoose';
 import { connectDB } from '@/lib/mongodb';
 import Workspace from '@/models/Workspace';
 import User from '@/models/User';
 import WorkspaceMember from '@/models/WorkspaceMember';
 import bcrypt from 'bcryptjs';
-import crypto from 'crypto';
 import jwt from 'jsonwebtoken';
 
 const FALLBACK_SECRET = 'insecure_dev_secret_change_me';
@@ -19,7 +19,7 @@ export async function POST(req) {
   try {
     await connectDB();
     const body = await req.json();
-    const { joinCode, userId, role, name, email } = body || {};
+    const { joinCode, userId, role, name, email, password } = body || {};
 
     const normalizedCode = String(joinCode || '').trim().toUpperCase();
     if (!normalizedCode || normalizedCode.length < 4) {
@@ -27,6 +27,9 @@ export async function POST(req) {
     }
     if (!userId && !email) {
       return NextResponse.json({ message: 'userId or email is required' }, { status: 400 });
+    }
+    if (userId && !mongoose.Types.ObjectId.isValid(userId)) {
+      return NextResponse.json({ message: 'Invalid userId' }, { status: 400 });
     }
 
     const workspace = await Workspace.findOne({ joinCode: normalizedCode });
@@ -41,8 +44,13 @@ export async function POST(req) {
       user = await User.findOne({ email: String(email).trim().toLowerCase() });
     }
     if (!user && email) {
-      // create a lightweight user for joiners (no password yet)
-      const pwd = await bcrypt.hash(crypto.randomBytes(6).toString('hex'), 10);
+      if (!password || String(password).length < 8) {
+        return NextResponse.json(
+          { message: 'Password must be at least 8 characters to join.' },
+          { status: 400 }
+        );
+      }
+      const pwd = await bcrypt.hash(String(password), 10);
       user = await User.create({
         name: String(name || 'New Member').trim(),
         email: String(email).trim().toLowerCase(),
@@ -54,6 +62,17 @@ export async function POST(req) {
     }
     if (!user) {
       return NextResponse.json({ message: 'User not found' }, { status: 404 });
+    }
+
+    // Allow setting / resetting password during join (for existing users too)
+    if (password && String(password).length < 8) {
+      return NextResponse.json(
+        { message: 'Password must be at least 8 characters to join.' },
+        { status: 400 }
+      );
+    }
+    if (password && String(password).length >= 8) {
+      user.passwordHash = await bcrypt.hash(String(password), 10);
     }
 
     user.workspaceId = workspace.workspaceId;
