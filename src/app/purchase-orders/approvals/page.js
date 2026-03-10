@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { Card, Empty, List, Tag, Typography, message } from 'antd';
+import { api } from '@/lib/api';
 
 const { Title, Text } = Typography;
 
@@ -22,9 +23,7 @@ export default function ApprovalsPage() {
   const fetchApprovals = async (uid) => {
     setLoading(true);
     try {
-      const res = await fetch(`/api/purchase-orders/approvals?userId=${uid}`);
-      const data = await res.json();
-      if (!res.ok) throw new Error(data?.message || 'Failed to load approvals');
+      const data = await api.listApprovals(uid);
       setOrders(data?.data || []);
     } catch (err) {
       message.error(err?.message || 'Could not load approvals');

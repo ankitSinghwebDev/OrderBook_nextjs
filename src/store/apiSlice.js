@@ -1,9 +1,10 @@
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
+import { API_BASE } from '@/lib/apiClient';
 
 export const api = createApi({
   reducerPath: 'api',
   baseQuery: fetchBaseQuery({
-    baseUrl: '/api',
+    baseUrl: API_BASE,
     credentials: 'include', // ensure auth cookies (auth_token) are sent/received
   }),
   tagTypes: ['User', 'PurchaseOrder'],

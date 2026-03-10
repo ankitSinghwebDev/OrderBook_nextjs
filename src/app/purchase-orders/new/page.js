@@ -17,6 +17,7 @@ import {
 } from "antd";
 import { PlusOutlined, InboxOutlined } from "@ant-design/icons";
 import { useRouter } from "next/navigation";
+import { api } from "@/lib/api";
 
 const { Title, Text } = Typography;
 const currencyOptions = ["USD", "EUR", "INR", "GBP", "AUD"];
@@ -187,13 +188,7 @@ export default function NewPurchaseOrderPage() {
         createdByUserId: userId,
       };
 
-      const res = await fetch("/api/purchase-orders", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data?.message || "Failed to create PO");
+      await api.createPurchaseOrder(payload);
 
       message.success("Purchase order created");
       router.push("/purchase-orders");

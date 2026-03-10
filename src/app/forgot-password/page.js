@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { api } from '@/lib/api';
 
 export default function ForgotPasswordPage() {
   const [status, setStatus] = useState({ state: 'idle', message: '' });
@@ -12,14 +13,8 @@ export default function ForgotPasswordPage() {
 
     setStatus({ state: 'loading', message: '' });
     try {
-      const res = await fetch('/api/auth/forgot', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data?.message || 'Request failed');
-      setStatus({ state: 'success', message: data.message || 'If an account exists, we sent an email.' });
+      const data = await api.forgotPassword(payload);
+      setStatus({ state: 'success', message: data?.message || 'If an account exists, we sent an email.' });
       event.currentTarget?.reset?.();
     } catch (err) {
       setStatus({ state: 'error', message: err.message });
