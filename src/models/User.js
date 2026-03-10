@@ -14,7 +14,7 @@ const UserSchema = new mongoose.Schema(
     isCreator: { type: Boolean, default: false },
     role: {
       type: String,
-      enum: ['admin', 'manager', 'viewer', 'user'],
+      enum: ['admin', 'manager', 'member', 'viewer', 'vendor', 'user'],
       default: 'viewer',
     },
     avatarUrl: { type: String, default: '' },

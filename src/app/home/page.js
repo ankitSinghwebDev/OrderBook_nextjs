@@ -1,9 +1,9 @@
 'use client';
 
 import Link from 'next/link';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useJoinWorkspaceMutation } from '@/store/apiSlice';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useDispatch } from 'react-redux';
 import { setUser } from '@/store/userSlice';
 
@@ -12,7 +12,7 @@ export default function Home() {
   const [form, setForm] = useState({
     name: '',
     email: '',
-    role: '',
+    role: 'viewer',
     joinCode: '',
     password: '',
     confirmPassword: '',
@@ -20,9 +20,30 @@ export default function Home() {
   const [joinWorkspace, { isLoading: joining }] = useJoinWorkspaceMutation();
   const [joinMessage, setJoinMessage] = useState('');
   const router = useRouter();
+  const searchParams = useSearchParams();
   const dispatch = useDispatch();
+  const roleOptions = [
+    { label: 'Admin', value: 'admin' },
+    { label: 'Member', value: 'member' },
+    { label: 'Viewer', value: 'viewer' },
+    { label: 'Vendor', value: 'vendor' },
+  ];
 
   const updateField = (field, value) => setForm((prev) => ({ ...prev, [field]: value }));
+
+  useEffect(() => {
+    const code = searchParams.get('joinCode');
+    if (code) {
+      setJoinOpen(true);
+      setForm((prev) => ({
+        ...prev,
+        joinCode: code.toUpperCase(),
+        email: searchParams.get('email') || prev.email,
+        role: searchParams.get('role') || prev.role || 'viewer',
+        name: searchParams.get('name') || prev.name,
+      }));
+    }
+  }, [searchParams]);
 
   const handleJoin = async (e) => {
     e.preventDefault();
@@ -340,7 +361,7 @@ export default function Home() {
       </section>
 
       {joinOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
+        <div className="fixed  w-full inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
           <div
             className="w-full max-w-md rounded-2xl border p-6 shadow-lg"
             style={{ backgroundColor: 'var(--card)', borderColor: 'var(--border)' }}
@@ -394,14 +415,19 @@ export default function Home() {
                 <label className="block text-sm font-medium" style={{ color: 'var(--foreground)' }}>
                   Role
                 </label>
-                <input
+                <select
                   required
                   value={form.role}
                   onChange={(e) => updateField('role', e.target.value)}
                   className="mt-1 w-full rounded-md border px-3 py-2"
-                  placeholder="Developer, Manager, Designer..."
                   style={{ borderColor: 'var(--border)', backgroundColor: 'color-mix(in srgb, var(--card) 94%, transparent)', color: 'var(--foreground)' }}
-                />
+                >
+                  {roleOptions.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
               </div>
               <div>
                 <label className="block text-sm font-medium" style={{ color: 'var(--foreground)' }}>

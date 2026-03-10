@@ -5,7 +5,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { setUser, setMembers } from '@/store/userSlice';
 import { useGetUserByIdQuery, useRegenerateJoinCodeMutation, useListWorkspaceMembersQuery } from '@/store/apiSlice';
-import { Drawer } from 'antd';
+import { Drawer, message } from 'antd';
 
 const actions = [
   { title: 'Create a new PO', href: '/create-new-po', desc: 'Start a fresh purchase order with items, supplier, and delivery details.' },
@@ -15,6 +15,12 @@ const actions = [
   { title: 'Approve / Reject POs', href: '/purchase-orders/approvals', desc: 'Review pending requests and act quickly.' },
   { title: "All POs in the project", href: '/purchase-orders', desc: 'Search and filter every PO across your workspace.' },
   { title: 'Create approval levels', href: '/approvals/rules', desc: 'Configure thresholds and multi-step workflows.' },
+];
+const roleOptions = [
+  { label: 'Admin', value: 'admin' },
+  { label: 'Member', value: 'member' },
+  { label: 'Viewer', value: 'viewer' },
+  { label: 'Vendor', value: 'vendor' },
 ];
 
 export default function WorkspacePage() {
@@ -26,6 +32,8 @@ export default function WorkspacePage() {
   const [membersDrawerOpen, setMembersDrawerOpen] = useState(false);
   const [avatarUploading, setAvatarUploading] = useState(false);
   const [inviteCode, setInviteCode] = useState('');
+  const [inviteForm, setInviteForm] = useState({ email: '', role: 'member' });
+  const [sendingInvite, setSendingInvite] = useState(false);
   const [isCopying, setIsCopying] = useState(false);
   const [regenJoinCode, { isLoading: isRegenLoading }] = useRegenerateJoinCodeMutation();
   const fileInputRef = useRef(null);
@@ -82,6 +90,43 @@ export default function WorkspacePage() {
       await navigator.clipboard.writeText(inviteCode);
     } finally {
       setIsCopying(false);
+    }
+  };
+
+  const handleSendInvite = async () => {
+    if (!inviteForm.email) {
+      message.warning('Enter an email to invite.');
+      return;
+    }
+    if (!reduxUser?.workspaceId || !reduxUser?._id) {
+      message.error('Workspace not ready. Try reloading.');
+      return;
+    }
+    setSendingInvite(true);
+    try {
+      const res = await fetch(`/api/workspaces/${reduxUser.workspaceId}/invite`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: inviteForm.email,
+          role: inviteForm.role,
+          inviterUserId: reduxUser._id,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data?.message || 'Failed to send invite');
+      if (data?.joinCode) {
+        setInviteCode(data.joinCode);
+        if (typeof window !== 'undefined') {
+          window.localStorage.setItem('joinCode', data.joinCode);
+        }
+      }
+      message.success(`Invite sent to ${inviteForm.email}`);
+      setInviteForm((prev) => ({ ...prev, email: '' }));
+    } catch (err) {
+      message.error(err.message || 'Failed to send invite');
+    } finally {
+      setSendingInvite(false);
     }
   };
 
@@ -145,6 +190,12 @@ export default function WorkspacePage() {
       if (fileInputRef.current) fileInputRef.current.value = '';
     }
   };
+
+  useEffect(() => {
+    if (inviteModalOpen && !inviteCode && reduxUser?.workspaceId && reduxUser?._id) {
+      handleGenerateInvite();
+    }
+  }, [inviteModalOpen, inviteCode, reduxUser?.workspaceId, reduxUser?._id]);
 
   return (
     <div className="relative min-h-screen overflow-hidden bg-gradient-to-b from-[var(--background)] via-[var(--background)] to-[var(--background)] py-10 transition-colors">
@@ -350,6 +401,67 @@ export default function WorkspacePage() {
                 }}
               >
                 {isRegenLoading ? 'Generating…' : 'Generate new code'}
+              </button>
+            </div>
+
+            <div
+              className="mt-6 space-y-3 rounded-xl border p-4"
+              style={{ borderColor: 'var(--border)', backgroundColor: 'color-mix(in srgb, var(--card) 94%, transparent)' }}
+            >
+              <div className="flex items-start justify-between">
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-[0.18em]" style={{ color: 'var(--muted)' }}>
+                    Invite by email
+                  </p>
+                  <h4 className="text-lg font-semibold" style={{ color: 'var(--foreground)' }}>
+                    Send a role-based invite
+                  </h4>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-xs font-semibold" style={{ color: 'var(--muted)' }}>
+                  Email
+                </label>
+                <input
+                  type="email"
+                  value={inviteForm.email}
+                  onChange={(e) => setInviteForm((prev) => ({ ...prev, email: e.target.value }))}
+                  className="w-full rounded-lg border px-3 py-2 text-sm"
+                  placeholder="vendor@acme.com"
+                  style={{ borderColor: 'var(--border)', backgroundColor: 'var(--card)', color: 'var(--foreground)' }}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-xs font-semibold" style={{ color: 'var(--muted)' }}>
+                  Role
+                </label>
+                <select
+                  value={inviteForm.role}
+                  onChange={(e) => setInviteForm((prev) => ({ ...prev, role: e.target.value }))}
+                  className="w-full rounded-lg border px-3 py-2 text-sm"
+                  style={{ borderColor: 'var(--border)', backgroundColor: 'var(--card)', color: 'var(--foreground)' }}
+                >
+                  {roleOptions.map((opt) => (
+                    <option key={opt.value} value={opt.value}>
+                      {opt.label}
+                    </option>
+                  ))}
+                </select>
+                <p className="text-xs" style={{ color: 'var(--muted)' }}>
+                  We will email the join code with this role attached so the system can place them correctly.
+                </p>
+              </div>
+
+              <button
+                type="button"
+                onClick={handleSendInvite}
+                disabled={sendingInvite}
+                className="w-full rounded-lg px-4 py-2 text-sm font-semibold transition-colors"
+                style={{ backgroundColor: 'var(--accent)', color: '#fff', opacity: sendingInvite ? 0.75 : 1 }}
+              >
+                {sendingInvite ? 'Sending…' : 'Send invite email'}
               </button>
             </div>
           </div>

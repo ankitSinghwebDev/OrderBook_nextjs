@@ -5,11 +5,18 @@ import { connectDB } from '@/lib/mongodb';
 import Workspace from '@/models/Workspace';
 import User from '@/models/User';
 import WorkspaceMember from '@/models/WorkspaceMember';
+import WorkspaceInvite from '@/models/WorkspaceInvite';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 
 const FALLBACK_SECRET = 'insecure_dev_secret_change_me';
 const JWT_SECRET = process.env.JWT_SECRET || FALLBACK_SECRET;
+const ALLOWED_ROLES = ['admin', 'manager', 'member', 'viewer', 'vendor', 'user'];
+
+const normalizeRole = (role) => {
+  const value = String(role || '').trim().toLowerCase();
+  return ALLOWED_ROLES.includes(value) ? value : 'viewer';
+};
 
 if (!process.env.JWT_SECRET && process.env.NODE_ENV === 'production') {
   throw new Error('JWT_SECRET is required in production');
@@ -22,6 +29,7 @@ export async function POST(req) {
     const { joinCode, userId, role, name, email, password } = body || {};
 
     const normalizedCode = String(joinCode || '').trim().toUpperCase();
+    const normalizedEmail = email ? String(email).trim().toLowerCase() : '';
     if (!normalizedCode || normalizedCode.length < 4) {
       return NextResponse.json({ message: 'joinCode is required' }, { status: 400 });
     }
@@ -38,11 +46,28 @@ export async function POST(req) {
     }
 
     let user = null;
+    let invite = null;
+    if (normalizedEmail) {
+      invite = await WorkspaceInvite.findOne({
+        workspaceId: workspace.workspaceId,
+        email: normalizedEmail,
+        joinCode: normalizedCode,
+      });
+    }
     if (userId) {
       user = await User.findById(userId);
     } else if (email) {
       user = await User.findOne({ email: String(email).trim().toLowerCase() });
     }
+    if (!invite && user?.email) {
+      invite = await WorkspaceInvite.findOne({
+        workspaceId: workspace.workspaceId,
+        email: user.email,
+        joinCode: normalizedCode,
+      });
+    }
+
+    const assignedRole = normalizeRole(invite?.role || role);
     if (!user && email) {
       if (!password || String(password).length < 8) {
         return NextResponse.json(
@@ -54,7 +79,7 @@ export async function POST(req) {
       user = await User.create({
         name: String(name || 'New Member').trim(),
         email: String(email).trim().toLowerCase(),
-        role: 'viewer',
+        role: assignedRole,
         workspaceId: workspace.workspaceId,
         isCreator: false,
         passwordHash: pwd,
@@ -77,7 +102,7 @@ export async function POST(req) {
 
     user.workspaceId = workspace.workspaceId;
     user.isCreator = false;
-    user.role = ['admin', 'manager', 'viewer'].includes(role) ? role : 'viewer';
+    user.role = assignedRole;
     await user.save();
 
     await Workspace.updateOne(
@@ -90,12 +115,18 @@ export async function POST(req) {
       {
         workspaceId: workspace.workspaceId,
         userId: user._id,
-        role: user.role,
+        role: assignedRole,
         isOwner: false,
         joinedAt: new Date(),
       },
       { upsert: true, new: true }
     );
+
+    if (invite) {
+      invite.status = 'accepted';
+      invite.acceptedAt = new Date();
+      await invite.save();
+    }
 
     const { joinCode: _jc, ...safeWorkspace } = workspace.toObject();
     const { passwordHash, ...safeUser } = user.toObject();
