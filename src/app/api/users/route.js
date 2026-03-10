@@ -4,6 +4,8 @@ import { NextResponse } from 'next/server';
 import { connectDB } from '@/lib/mongodb';
 import User from '@/models/User';
 
+const ALLOWED_ROLES = ['admin', 'manager', 'member', 'viewer', 'vendor', 'user'];
+
 export async function GET() {
   try {
     await connectDB();
@@ -49,7 +51,7 @@ export async function POST(req) {
     const user = await User.create({
       name: normalizedName,
       email: normalizedEmail,
-      role: ['admin', 'manager', 'viewer'].includes(normalizedRole) ? normalizedRole : 'viewer',
+      role: ALLOWED_ROLES.includes(normalizedRole) ? normalizedRole : 'viewer',
       phoneNumber: String(phoneNumber || '').trim(),
       companyName: String(companyName || '').trim(),
       isIndiaB2B: indiaBasedB2B,

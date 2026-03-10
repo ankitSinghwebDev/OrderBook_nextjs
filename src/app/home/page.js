@@ -1,30 +1,71 @@
 'use client';
 
 import Link from 'next/link';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useJoinWorkspaceMutation } from '@/store/apiSlice';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { useDispatch } from 'react-redux';
+import { setUser } from '@/store/userSlice';
 
 export default function Home() {
   const [joinOpen, setJoinOpen] = useState(false);
-  const [form, setForm] = useState({ name: '', email: '', role: '', joinCode: '' });
+  const [form, setForm] = useState({
+    name: '',
+    email: '',
+    role: 'viewer',
+    joinCode: '',
+    password: '',
+    confirmPassword: '',
+  });
   const [joinWorkspace, { isLoading: joining }] = useJoinWorkspaceMutation();
   const [joinMessage, setJoinMessage] = useState('');
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const dispatch = useDispatch();
+  const roleOptions = [
+    { label: 'Admin', value: 'admin' },
+    { label: 'Member', value: 'member' },
+    { label: 'Viewer', value: 'viewer' },
+    { label: 'Vendor', value: 'vendor' },
+  ];
 
   const updateField = (field, value) => setForm((prev) => ({ ...prev, [field]: value }));
+
+  useEffect(() => {
+    const code = searchParams.get('joinCode');
+    if (code) {
+      setJoinOpen(true);
+      setForm((prev) => ({
+        ...prev,
+        joinCode: code.toUpperCase(),
+        email: searchParams.get('email') || prev.email,
+        role: searchParams.get('role') || prev.role || 'viewer',
+        name: searchParams.get('name') || prev.name,
+      }));
+    }
+  }, [searchParams]);
 
   const handleJoin = async (e) => {
     e.preventDefault();
     setJoinMessage('');
+    if (form.password.length < 8) {
+      setJoinMessage('Password must be at least 8 characters.');
+      return;
+    }
+    if (form.password !== form.confirmPassword) {
+      setJoinMessage('Passwords do not match.');
+      return;
+    }
     try {
       const res = await joinWorkspace({
         name: form.name,
         email: form.email,
         role: form.role,
         joinCode: form.joinCode,
+        password: form.password,
       }).unwrap();
       if (res?.user?._id) {
+        dispatch(setUser({ user: res.user, token: res.token }));
         window.localStorage.setItem('isAuthed', 'true');
         window.localStorage.setItem('userId', res.user._id || '');
         window.localStorage.setItem('userEmail', res.user.email || '');
@@ -320,7 +361,7 @@ export default function Home() {
       </section>
 
       {joinOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
+        <div className="fixed  w-full inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
           <div
             className="w-full max-w-md rounded-2xl border p-6 shadow-lg"
             style={{ backgroundColor: 'var(--card)', borderColor: 'var(--border)' }}
@@ -374,14 +415,19 @@ export default function Home() {
                 <label className="block text-sm font-medium" style={{ color: 'var(--foreground)' }}>
                   Role
                 </label>
-                <input
+                <select
                   required
                   value={form.role}
                   onChange={(e) => updateField('role', e.target.value)}
                   className="mt-1 w-full rounded-md border px-3 py-2"
-                  placeholder="Developer, Manager, Designer..."
                   style={{ borderColor: 'var(--border)', backgroundColor: 'color-mix(in srgb, var(--card) 94%, transparent)', color: 'var(--foreground)' }}
-                />
+                >
+                  {roleOptions.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
               </div>
               <div>
                 <label className="block text-sm font-medium" style={{ color: 'var(--foreground)' }}>
@@ -394,6 +440,37 @@ export default function Home() {
                   className="mt-1 w-full rounded-md border px-3 py-2"
                   style={{ borderColor: 'var(--border)', backgroundColor: 'color-mix(in srgb, var(--card) 94%, transparent)', color: 'var(--foreground)' }}
                 />
+              </div>
+              <div className="grid gap-3 sm:grid-cols-2">
+                <div>
+                  <label className="block text-sm font-medium" style={{ color: 'var(--foreground)' }}>
+                    Set password (for future logins)
+                  </label>
+                  <input
+                    type="password"
+                    required
+                    minLength={8}
+                    value={form.password}
+                    onChange={(e) => updateField('password', e.target.value)}
+                    className="mt-1 w-full rounded-md border px-3 py-2"
+                    placeholder="Min 8 characters"
+                    style={{ borderColor: 'var(--border)', backgroundColor: 'color-mix(in srgb, var(--card) 94%, transparent)', color: 'var(--foreground)' }}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium" style={{ color: 'var(--foreground)' }}>
+                    Confirm password
+                  </label>
+                  <input
+                    type="password"
+                    required
+                    minLength={8}
+                    value={form.confirmPassword}
+                    onChange={(e) => updateField('confirmPassword', e.target.value)}
+                    className="mt-1 w-full rounded-md border px-3 py-2"
+                    style={{ borderColor: 'var(--border)', backgroundColor: 'color-mix(in srgb, var(--card) 94%, transparent)', color: 'var(--foreground)' }}
+                  />
+                </div>
               </div>
               <button
                 type="submit"
