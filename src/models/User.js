@@ -17,6 +17,7 @@ const UserSchema = new mongoose.Schema(
       enum: ['admin', 'manager', 'viewer', 'user'],
       default: 'viewer',
     },
+    avatarUrl: { type: String, default: '' },
     passwordHash: { type: String },
     resetToken: { type: String },
     resetExpires: { type: Date },

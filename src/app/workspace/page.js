@@ -1,10 +1,11 @@
 'use client';
 
 import Link from 'next/link';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
-import { setUser } from '@/store/userSlice';
+import { setUser, setMembers } from '@/store/userSlice';
 import { useGetUserByIdQuery, useRegenerateJoinCodeMutation, useListWorkspaceMembersQuery } from '@/store/apiSlice';
+import { Drawer } from 'antd';
 
 const actions = [
   { title: 'Create a new PO', href: '/create-new-po', desc: 'Start a fresh purchase order with items, supplier, and delivery details.' },
@@ -19,13 +20,19 @@ const actions = [
 export default function WorkspacePage() {
   const [userId, setUserId] = useState(null);
   const reduxUser = useSelector((state) => state.user.user);
+  const storedMembers = useSelector((state) => state.user.members);
   const dispatch = useDispatch();
   const [inviteModalOpen, setInviteModalOpen] = useState(false);
+  const [membersDrawerOpen, setMembersDrawerOpen] = useState(false);
+  const [avatarUploading, setAvatarUploading] = useState(false);
   const [inviteCode, setInviteCode] = useState('');
   const [isCopying, setIsCopying] = useState(false);
   const [regenJoinCode, { isLoading: isRegenLoading }] = useRegenerateJoinCodeMutation();
+  const fileInputRef = useRef(null);
   const workspaceId = reduxUser?.workspaceId || (typeof window !== 'undefined' && window.localStorage.getItem('workspaceId')) || null;
-  const { data: membersData } = useListWorkspaceMembersQuery(workspaceId, { skip: !workspaceId });
+  const { data: membersData } = useListWorkspaceMembersQuery(workspaceId, {
+    skip: !workspaceId || (storedMembers && storedMembers.length > 0),
+  });
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -44,6 +51,12 @@ export default function WorkspacePage() {
       dispatch(setUser({ user: data.user }));
     }
   }, [data?.user, reduxUser, dispatch]);
+
+  useEffect(() => {
+    if (membersData?.members?.length) {
+      dispatch(setMembers(membersData.members));
+    }
+  }, [membersData?.members, dispatch]);
 
   const handleGenerateInvite = async () => {
     if (!reduxUser?.workspaceId || !reduxUser?._id) return;
@@ -69,6 +82,67 @@ export default function WorkspacePage() {
       await navigator.clipboard.writeText(inviteCode);
     } finally {
       setIsCopying(false);
+    }
+  };
+
+  const handleAvatarSelect = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleAvatarUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file || !reduxUser?._id) return;
+    try {
+      setAvatarUploading(true);
+      // Step 1: get signed payload
+      const signRes = await fetch('/api/uploads', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          folder: process.env.NEXT_PUBLIC_CLOUDINARY_FOLDER || 'orderbook/avatars',
+          publicId: `user-${reduxUser._id}`,
+        }),
+      });
+      if (!signRes.ok) throw new Error('Failed to sign upload');
+      const payload = await signRes.json();
+
+      // Step 2: upload to Cloudinary directly
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('api_key', payload.apiKey);
+      formData.append('timestamp', payload.timestamp);
+      formData.append('signature', payload.signature);
+      formData.append('folder', payload.folder);
+      if (payload.publicId) formData.append('public_id', payload.publicId);
+
+      const uploadRes = await fetch(
+        `https://api.cloudinary.com/v1_1/${payload.cloudName}/auto/upload`,
+        { method: 'POST', body: formData }
+      );
+      const uploadJson = await uploadRes.json();
+      if (!uploadRes.ok) {
+        throw new Error(uploadJson?.error?.message || 'Upload failed');
+      }
+
+      const avatarUrl = uploadJson.secure_url;
+
+      // Step 3: persist on user record
+      const patchRes = await fetch(`/api/users/${reduxUser._id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ avatarUrl }),
+      });
+      if (!patchRes.ok) throw new Error('Failed to save avatar');
+      const updated = await patchRes.json();
+      if (updated?.user) {
+        dispatch(setUser({ user: updated.user }));
+      }
+    } catch (err) {
+      console.error('Avatar upload failed', err);
+      alert('Failed to upload avatar. Please try again.');
+    } finally {
+      setAvatarUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = '';
     }
   };
 
@@ -107,19 +181,47 @@ export default function WorkspacePage() {
           {isLoading && !reduxUser ? (
             <p className="text-sm text-[var(--muted)]">Loading your profile…</p>
           ) : reduxUser ? (
-            <div className="flex items-center gap-3">
-              <div
-                className="h-10 w-10 rounded-full flex items-center justify-center font-semibold"
-                style={{ backgroundColor: "var(--accent-soft)", color: "var(--accent)" }}
-              >
-                {reduxUser.name?.[0]?.toUpperCase() || reduxUser.email?.[0]?.toUpperCase()}
+            <div className="flex items-center gap-3 flex-wrap">
+              <div className="flex items-center gap-2">
+                {reduxUser.avatarUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={reduxUser.avatarUrl}
+                    alt="avatar"
+                    className="h-12 w-12 rounded-full object-cover border"
+                    style={{ borderColor: 'var(--border)' }}
+                  />
+                ) : (
+                  <div
+                    className="h-12 w-12 rounded-full flex items-center justify-center font-semibold"
+                    style={{ backgroundColor: "var(--accent-soft)", color: "var(--accent)" }}
+                  >
+                    {reduxUser.name?.[0]?.toUpperCase() || reduxUser.email?.[0]?.toUpperCase()}
+                  </div>
+                )}
+                <div>
+                  <p className="text-sm font-semibold text-[var(--foreground)]">{reduxUser.name || 'User'}</p>
+                  <p className="text-xs text-[var(--muted)]">{reduxUser.email}</p>
+                </div>
               </div>
-              <div>
-                <p className="text-sm font-semibold text-[var(--foreground)]">{reduxUser.name || 'User'}</p>
-                <p className="text-xs text-[var(--muted)]">{reduxUser.email}</p>
-              </div>
-              {reduxUser?.isCreator && (
-                <div className="ml-auto">
+              <div className="ml-auto flex items-center gap-2">
+                <input
+                  type="file"
+                  accept="image/*"
+                  ref={fileInputRef}
+                  className="hidden"
+                  onChange={handleAvatarUpload}
+                />
+                <button
+                  type="button"
+                  onClick={handleAvatarSelect}
+                  disabled={avatarUploading}
+                  className="rounded-lg px-3 py-1.5 text-sm font-semibold transition-colors border"
+                  style={{ borderColor: 'var(--border)', color: 'var(--foreground)' }}
+                >
+                  {avatarUploading ? 'Uploading…' : 'Update photo'}
+                </button>
+                {reduxUser?.isCreator && (
                   <button
                     type="button"
                     onClick={() => setInviteModalOpen(true)}
@@ -128,8 +230,8 @@ export default function WorkspacePage() {
                   >
                     Generate invite code
                   </button>
-                </div>
-              )}
+                )}
+              </div>
             </div>
           ) : (
             <p className="text-sm text-[var(--muted)]">
@@ -164,66 +266,28 @@ export default function WorkspacePage() {
 
         {reduxUser?.workspaceId && (
           <div
-            className="rounded-2xl border p-4 shadow-sm backdrop-blur transition-colors"
+            className="rounded-2xl border p-4 shadow-sm backdrop-blur transition-colors flex items-center justify-between"
             style={{ backgroundColor: 'var(--card)', borderColor: 'var(--border)' }}
           >
-            <div className="flex items-center justify-between mb-3">
-              <div>
-                <p className="text-xs font-semibold uppercase tracking-[0.18em]" style={{ color: 'var(--muted)' }}>
-                  Workspace Members
-                </p>
-                <h3 className="text-lg font-semibold" style={{ color: 'var(--foreground)' }}>
-                  {membersData?.members?.length || 0} people
-                </h3>
-              </div>
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.18em]" style={{ color: 'var(--muted)' }}>
+                Workspace Members
+              </p>
+              <h3 className="text-lg font-semibold" style={{ color: 'var(--foreground)' }}>
+                {(storedMembers?.length || membersData?.members?.length || 0)} people
+              </h3>
+              <p className="text-sm" style={{ color: 'var(--muted)' }}>
+                View and manage everyone in this workspace.
+              </p>
             </div>
-            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-              {(membersData?.members || []).map((member) => (
-                <div
-                  key={member.userId}
-                  className="rounded-xl border p-3"
-                  style={{ borderColor: 'var(--border)', backgroundColor: 'color-mix(in srgb, var(--card) 94%, transparent)' }}
-                >
-                  <div className="flex items-center gap-2">
-                    <div
-                      className="h-9 w-9 rounded-full flex items-center justify-center text-sm font-semibold"
-                      style={{ backgroundColor: 'var(--accent-soft)', color: 'var(--accent)' }}
-                    >
-                      {member?.name?.[0]?.toUpperCase() || member?.email?.[0]?.toUpperCase() || '?'}
-                    </div>
-                    <div className="min-w-0">
-                      <p className="text-sm font-semibold" style={{ color: 'var(--foreground)' }}>
-                        {member.name || 'Member'}
-                      </p>
-                      <p className="text-xs" style={{ color: 'var(--muted)' }}>
-                        {member.email}
-                      </p>
-                    </div>
-                  </div>
-                  <div className="mt-2 flex items-center gap-2 text-xs" style={{ color: 'var(--muted)' }}>
-                    <span
-                      className="rounded-full px-2 py-1 font-semibold"
-                      style={{ backgroundColor: 'var(--accent-softer)', color: 'var(--foreground)' }}
-                    >
-                      {member.role || 'viewer'}
-                    </span>
-                    {member.isOwner && (
-                      <span
-                        className="rounded-full px-2 py-1 text-[10px] font-semibold"
-                        style={{ backgroundColor: 'var(--accent-soft)', color: 'var(--accent)' }}
-                      >
-                        Owner
-                      </span>
-                    )}
-                  </div>
-                </div>
-              ))}
-              {(!membersData?.members || membersData.members.length === 0) && (
-                <p className="text-sm" style={{ color: 'var(--muted)' }}>
-                  No members yet.
-                </p>
-              )}
-            </div>
+            <button
+              type="button"
+              onClick={() => setMembersDrawerOpen(true)}
+              className="rounded-lg px-4 py-2 text-sm font-semibold transition-colors shadow-sm"
+              style={{ backgroundColor: 'var(--accent)', color: '#fff' }}
+            >
+              View members
+            </button>
           </div>
         )}
       </div>
@@ -291,6 +355,76 @@ export default function WorkspacePage() {
           </div>
         </div>
       )}
+
+      <Drawer
+        title="Workspace members"
+        placement="right"
+        width={420}
+        onClose={() => setMembersDrawerOpen(false)}
+        open={membersDrawerOpen}
+        styles={{
+          header: { background: 'var(--card)', color: 'var(--foreground)' },
+          body: { background: 'var(--card)' },
+        }}
+      >
+        <div className="space-y-3">
+          {(storedMembers?.length ? storedMembers : membersData?.members || []).map((member) => (
+            <div
+              key={member.userId}
+              className="rounded-xl border p-3"
+              style={{ borderColor: 'var(--border)', backgroundColor: 'color-mix(in srgb, var(--card) 94%, transparent)' }}
+            >
+              <div className="flex items-center gap-2">
+                {member?.avatarUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={member.avatarUrl}
+                    alt={member.name || 'avatar'}
+                    className="h-9 w-9 rounded-full object-cover border"
+                    style={{ borderColor: 'var(--border)' }}
+                  />
+                ) : (
+                  <div
+                    className="h-9 w-9 rounded-full flex items-center justify-center text-sm font-semibold"
+                    style={{ backgroundColor: 'var(--accent-soft)', color: 'var(--accent)' }}
+                  >
+                    {member?.name?.[0]?.toUpperCase() || member?.email?.[0]?.toUpperCase() || '?'}
+                  </div>
+                )}
+                <div className="min-w-0">
+                  <p className="text-sm font-semibold" style={{ color: 'var(--foreground)' }}>
+                    {member.name || 'Member'}
+                  </p>
+                  <p className="text-xs" style={{ color: 'var(--muted)' }}>
+                    {member.email}
+                  </p>
+                </div>
+              </div>
+              <div className="mt-2 flex items-center gap-2 text-xs" style={{ color: 'var(--muted)' }}>
+                <span
+                  className="rounded-full px-2 py-1 font-semibold"
+                  style={{ backgroundColor: 'var(--accent-softer)', color: 'var(--foreground)' }}
+                >
+                  {member.role || 'viewer'}
+                </span>
+                {member.isOwner && (
+                  <span
+                    className="rounded-full px-2 py-1 text-[10px] font-semibold"
+                    style={{ backgroundColor: 'var(--accent-soft)', color: 'var(--accent)' }}
+                  >
+                    Owner
+                  </span>
+                )}
+              </div>
+            </div>
+          ))}
+          {(!membersData?.members || membersData.members.length === 0) && (
+            <p className="text-sm" style={{ color: 'var(--muted)' }}>
+              No members yet.
+            </p>
+          )}
+        </div>
+      </Drawer>
     </div>
   );
 }

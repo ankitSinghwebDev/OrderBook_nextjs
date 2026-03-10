@@ -15,7 +15,7 @@ export async function GET(_req, { params }) {
     const memberships = await WorkspaceMember.find({ workspaceId }).lean();
     const userIds = memberships.map((m) => m.userId);
     const users = await User.find({ _id: { $in: userIds } })
-      .select('name email role workspaceId isCreator')
+      .select('name email role workspaceId isCreator avatarUrl')
       .lean();
 
     const usersById = new Map(users.map((u) => [u._id.toString(), u]));
@@ -26,6 +26,7 @@ export async function GET(_req, { params }) {
         userId: m.userId,
         name: user.name,
         email: user.email,
+        avatarUrl: user.avatarUrl,
         role: m.role || user.role,
         isOwner: !!m.isOwner,
         joinedAt: m.joinedAt,

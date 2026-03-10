@@ -4,6 +4,8 @@ import Link from 'next/link';
 import { useState } from 'react';
 import { useJoinWorkspaceMutation } from '@/store/apiSlice';
 import { useRouter } from 'next/navigation';
+import { useDispatch } from 'react-redux';
+import { setUser } from '@/store/userSlice';
 
 export default function Home() {
   const [joinOpen, setJoinOpen] = useState(false);
@@ -18,6 +20,7 @@ export default function Home() {
   const [joinWorkspace, { isLoading: joining }] = useJoinWorkspaceMutation();
   const [joinMessage, setJoinMessage] = useState('');
   const router = useRouter();
+  const dispatch = useDispatch();
 
   const updateField = (field, value) => setForm((prev) => ({ ...prev, [field]: value }));
 
@@ -41,6 +44,7 @@ export default function Home() {
         password: form.password,
       }).unwrap();
       if (res?.user?._id) {
+        dispatch(setUser({ user: res.user, token: res.token }));
         window.localStorage.setItem('isAuthed', 'true');
         window.localStorage.setItem('userId', res.user._id || '');
         window.localStorage.setItem('userEmail', res.user.email || '');
