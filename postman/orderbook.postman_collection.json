@@ -1,0 +1,320 @@
+{
+  "info": {
+    "name": "OrderBook API",
+    "_postman_id": "b7d3c7d3-0000-4e3b-9000-collection",
+    "description": "Postman collection covering all OrderBook Next.js API routes. Set `{{baseUrl}}` to your environment (defaults to http://localhost:3000/api). `{{token}}` is captured automatically from register/login and can be used for Authorization when you enable middleware.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:3000/api" },
+    { "key": "token", "value": "" },
+    { "key": "userId", "value": "" },
+    { "key": "workspaceId", "value": "" }
+  ],
+  "item": [
+    {
+      "name": "Health & Diagnostics",
+      "item": [
+        {
+          "name": "GET /health",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/health", "host": ["{{baseUrl}}"], "path": ["health"] },
+            "description": "Heartbeat plus DB reachability"
+          }
+        },
+        {
+          "name": "GET /test-db",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/test-db", "host": ["{{baseUrl}}"], "path": ["test-db"] },
+            "description": "Mongo connectivity check"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Reference Data",
+      "item": [
+        {
+          "name": "GET /reference-data",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/reference-data?country=India",
+              "host": ["{{baseUrl}}"],
+              "path": ["reference-data"],
+              "query": [{ "key": "country", "value": "India" }]
+            },
+            "description": "Static dropdown data for onboarding"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "GET /auth",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/auth", "host": ["{{baseUrl}}"], "path": ["auth"] },
+            "description": "Stub auth check"
+          }
+        },
+        {
+          "name": "POST /auth/register",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fullName\": \"Ada Lovelace\",\n  \"email\": \"ada@example.com\",\n  \"password\": \"password123\",\n  \"companyName\": \"Analytical Engines\",\n  \"companyAddress\": \"London\",\n  \"phoneNumber\": \"+44 20 1234 5678\",\n  \"isIndiaB2B\": false,\n  \"role\": \"admin\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/auth/register", "host": ["{{baseUrl}}"], "path": ["auth", "register"] },
+            "description": "Create user + workspace; captures token/user/workspace on success"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const json = pm.response.json();",
+                  "if (json.token) pm.collectionVariables.set('token', json.token);",
+                  "if (json.user && json.user._id) pm.collectionVariables.set('userId', json.user._id);",
+                  "if (json.workspace && json.workspace.workspaceId) pm.collectionVariables.set('workspaceId', json.workspace.workspaceId);",
+                  "pm.test('Status is 201', () => pm.expect(pm.response.code).to.be.oneOf([201]));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "POST /auth/login",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"email\": \"ada@example.com\",\n  \"password\": \"password123\"\n}" },
+            "url": { "raw": "{{baseUrl}}/auth/login", "host": ["{{baseUrl}}"], "path": ["auth", "login"] },
+            "description": "Login; stores token/user on success"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const json = pm.response.json();",
+                  "if (json.token) pm.collectionVariables.set('token', json.token);",
+                  "if (json.user && json.user._id) pm.collectionVariables.set('userId', json.user._id);",
+                  "pm.test('Status is 200', () => pm.expect(pm.response.code).to.eql(200));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "POST /auth/logout",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/auth/logout", "host": ["{{baseUrl}}"], "path": ["auth", "logout"] },
+            "description": "Clears auth cookie"
+          }
+        },
+        {
+          "name": "POST /auth/forgot",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{ \"email\": \"ada@example.com\" }" },
+            "url": { "raw": "{{baseUrl}}/auth/forgot", "host": ["{{baseUrl}}"], "path": ["auth", "forgot"] },
+            "description": "Send password reset email (always 200)"
+          }
+        },
+        {
+          "name": "POST /auth/reset",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"token\": \"<from reset link>\",\n  \"password\": \"newStrongPass1\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/auth/reset", "host": ["{{baseUrl}}"], "path": ["auth", "reset"] },
+            "description": "Complete password reset"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Workspaces",
+      "item": [
+        {
+          "name": "POST /workspaces",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}", "disabled": true }
+            ],
+            "body": { "mode": "raw", "raw": "{\n  \"name\": \"Demo Workspace\",\n  \"ownerUserId\": \"{{userId}}\"\n}" },
+            "url": { "raw": "{{baseUrl}}/workspaces", "host": ["{{baseUrl}}"], "path": ["workspaces"] },
+            "description": "Create workspace; updates owner and sets cookie"
+          }
+        },
+        {
+          "name": "POST /workspaces/join",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}", "disabled": true }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"joinCode\": \"ABCDE1\",\n  \"email\": \"joiner@example.com\",\n  \"name\": \"Joiner\",\n  \"role\": \"viewer\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/workspaces/join", "host": ["{{baseUrl}}"], "path": ["workspaces", "join"] },
+            "description": "Join via code (creates user if email not found)"
+          }
+        },
+        {
+          "name": "PATCH /workspaces/:workspaceId",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}", "disabled": true }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"requesterUserId\": \"{{userId}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/workspaces/{{workspaceId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["workspaces", "{{workspaceId}}"]
+            },
+            "description": "Regenerate join code (owner only)"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Users",
+      "item": [
+        {
+          "name": "GET /users",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}", "disabled": true }],
+            "url": { "raw": "{{baseUrl}}/users", "host": ["{{baseUrl}}"], "path": ["users"] },
+            "description": "List users"
+          }
+        },
+        {
+          "name": "POST /users",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}", "disabled": true }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Viewer One\",\n  \"email\": \"viewer@example.com\",\n  \"role\": \"viewer\",\n  \"companyName\": \"Analytical Engines\",\n  \"companyAddress\": \"London\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/users", "host": ["{{baseUrl}}"], "path": ["users"] },
+            "description": "Create user (no password)"
+          }
+        },
+        {
+          "name": "GET /users/:id",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}", "disabled": true }],
+            "url": {
+              "raw": "{{baseUrl}}/users/{{userId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["users", "{{userId}}"]
+            },
+            "description": "Fetch single user"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Purchase Orders",
+      "item": [
+        {
+          "name": "GET /purchase-orders",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}", "disabled": true }],
+            "url": {
+              "raw": "{{baseUrl}}/purchase-orders?workspaceId={{workspaceId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["purchase-orders"],
+              "query": [{ "key": "workspaceId", "value": "{{workspaceId}}", "disabled": true }]
+            },
+            "description": "List purchase orders (filter by workspaceId or approverUserId)"
+          }
+        },
+        {
+          "name": "POST /purchase-orders",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}", "disabled": true }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"orderNumber\": \"PO-1001\",\n  \"supplier\": \"Acme Supplies\",\n  \"orderDate\": \"2024-01-15\",\n  \"currency\": \"USD\",\n  \"workspaceId\": \"{{workspaceId}}\",\n  \"deliveryAddress\": \"123 Market St, SF\",\n  \"notes\": \"Deliver weekdays\",\n  \"shipping\": 25,\n  \"discount\": 0,\n  \"items\": [\n    { \"name\": \"Paper\", \"qty\": 10, \"rate\": 5, \"tax\": 5 },\n    { \"name\": \"Ink\", \"qty\": 2, \"rate\": 40, \"tax\": 12 }\n  ],\n  \"approverUserId\": \"{{userId}}\",\n  \"createdByUserId\": \"{{userId}}\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/purchase-orders", "host": ["{{baseUrl}}"], "path": ["purchase-orders"] },
+            "description": "Create purchase order (server computes totals)"
+          }
+        },
+        {
+          "name": "GET /purchase-orders/approvals",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}", "disabled": true }],
+            "url": {
+              "raw": "{{baseUrl}}/purchase-orders/approvals?userId={{userId}}&status=pending",
+              "host": ["{{baseUrl}}"],
+              "path": ["purchase-orders", "approvals"],
+              "query": [
+                { "key": "userId", "value": "{{userId}}" },
+                { "key": "status", "value": "pending" }
+              ]
+            },
+            "description": "Approver inbox for POs"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Bot",
+      "item": [
+        {
+          "name": "POST /bot",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{ \"message\": \"Hello bot\" }" },
+            "url": { "raw": "{{baseUrl}}/bot", "host": ["{{baseUrl}}"], "path": ["bot"] },
+            "description": "Placeholder bot echo endpoint"
+          }
+        }
+      ]
+    }
+  ]
+}
