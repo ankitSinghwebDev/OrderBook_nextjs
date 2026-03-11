@@ -1,6 +1,10 @@
 {
-  "/home/page": "app/home/page.js",
-  "/signup/page": "app/signup/page.js",
+  "/api/auth/register/route": "app/api/auth/register/route.js",
+  "/api/workspaces/[workspaceId]/members/route": "app/api/workspaces/[workspaceId]/members/route.js",
+  "/api/users/[id]/route": "app/api/users/[id]/route.js",
   "/login/page": "app/login/page.js",
-  "/page": "app/page.js"
+  "/forgot-password/page": "app/forgot-password/page.js",
+  "/reset-password/page": "app/reset-password/page.js",
+  "/signup/page": "app/signup/page.js",
+  "/workspace/page": "app/workspace/page.js"
 }
