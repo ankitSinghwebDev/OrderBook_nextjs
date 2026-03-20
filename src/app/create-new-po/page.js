@@ -1,5 +1,11 @@
 'use client';
 
-import NewPurchaseOrderPage from '../purchase-orders/new/page';
+import { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 
-export default NewPurchaseOrderPage;
+// Redirect to the canonical PO creation page
+export default function CreateNewPORedirect() {
+  const router = useRouter();
+  useEffect(() => { router.replace('/purchase-orders/new'); }, [router]);
+  return null;
+}

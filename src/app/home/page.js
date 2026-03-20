@@ -1,13 +1,21 @@
 'use client';
 
 import Link from 'next/link';
-import { useEffect, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import { useJoinWorkspaceMutation } from '@/store/apiSlice';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useDispatch } from 'react-redux';
 import { setUser } from '@/store/userSlice';
 
 export default function Home() {
+  return (
+    <Suspense fallback={<div className="flex justify-center py-20">Loading...</div>}>
+      <HomeContent />
+    </Suspense>
+  );
+}
+
+function HomeContent() {
   const [joinOpen, setJoinOpen] = useState(false);
   const [form, setForm] = useState({
     name: '',
@@ -229,13 +237,12 @@ export default function Home() {
         </p>
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {[
-            { title: 'Create a new PO', href: '/create-new-po', desc: 'Start a fresh purchase order with items, supplier, and delivery details.' },
-            { title: 'POs created by me', href: '/purchase-orders/mine', desc: 'See requests you opened and their current status.' },
-            { title: 'Add new suppliers', href: '/suppliers/new', desc: 'Onboard vendors with contacts, terms, and documents.' },
-            { title: 'Add delivery address', href: '/addresses/new', desc: 'Manage shipping destinations for your POs.' },
+            { title: 'Create a new PO', href: '/purchase-orders/new', desc: 'Start a fresh purchase order with items, supplier, and delivery details.' },
+            { title: 'All Purchase Orders', href: '/purchase-orders', desc: 'Search and filter every PO across your workspace.' },
+            { title: 'Manage Suppliers', href: '/suppliers', desc: 'Onboard vendors with contacts, terms, and documents.' },
+            { title: 'Delivery Addresses', href: '/addresses', desc: 'Manage shipping destinations for your POs.' },
             { title: 'Approve / Reject POs', href: '/purchase-orders/approvals', desc: 'Review pending requests and take action with one click.' },
-            { title: "All POs in the project", href: '/purchase-orders', desc: 'Search and filter every PO across your workspace.' },
-            { title: 'Create approval levels', href: '/approvals/rules', desc: 'Set thresholds and multi-step workflows for spend control.' },
+            { title: 'Dashboard', href: '/dashboard', desc: 'Overview of spend, PO counts, and approval activity.' },
           ].map((item) => (
             <Link
               key={item.title}
