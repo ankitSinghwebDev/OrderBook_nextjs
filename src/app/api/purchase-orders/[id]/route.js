@@ -67,8 +67,8 @@ export async function PATCH(req, { params }) {
     return handleStatusChange(req, po, body, user);
   }
 
-  // Regular edit — only allowed on draft or pending
-  if (!['draft', 'pending'].includes(po.status)) {
+  // Regular edit — allowed on draft, pending, or rejected (for resubmission)
+  if (!['draft', 'pending', 'rejected'].includes(po.status)) {
     return NextResponse.json({
       success: false,
       message: `Cannot edit a PO with status '${po.status}'`,

@@ -30,19 +30,9 @@ export default function RootLayout({ children }) {
         suppressHydrationWarning
       >
         <ThemeProvider>
-          <div className="pointer-events-none fixed inset-0 -z-10 overflow-hidden will-change-auto">
-            <div
-              className="absolute -left-24 top-10 h-72 w-72 rounded-full opacity-40 blur-3xl"
-              style={{ backgroundColor: "var(--accent-soft)" }}
-            />
-            <div
-              className="absolute right-[-6rem] top-40 h-80 w-80 rounded-full opacity-30 blur-3xl"
-              style={{ backgroundColor: "var(--accent-softer)" }}
-            />
-          </div>
           <Providers>
             <Header />
-            <main className="mx-auto max-w-6xl px-6 py-8">
+            <main className="mx-auto max-w-[1440px] px-6 pt-20 pb-6 lg:px-10">
               <Breadcrumbs />
               <ErrorBoundary>
                 {children}

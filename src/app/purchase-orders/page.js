@@ -1,8 +1,8 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
-import { Card, Table, Tag, Input, Select, DatePicker, Button, Space, Typography, message, Tooltip } from 'antd';
-import { PlusOutlined, SearchOutlined, EyeOutlined, EditOutlined, ReloadOutlined } from '@ant-design/icons';
+import { Card, Table, Tag, Input, Select, DatePicker, Button, Space, Typography, message, Tooltip, Modal } from 'antd';
+import { PlusOutlined, SearchOutlined, EyeOutlined, EditOutlined, ReloadOutlined, CheckCircleOutlined, CloseCircleOutlined, StopOutlined, DownloadOutlined } from '@ant-design/icons';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { api } from '@/lib/api';
@@ -26,6 +26,35 @@ export default function PurchaseOrdersPage() {
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [dateRange, setDateRange] = useState(null);
+  const [selectedRowKeys, setSelectedRowKeys] = useState([]);
+  const [bulkLoading, setBulkLoading] = useState(false);
+
+  const handleBulkAction = async (action) => {
+    if (!selectedRowKeys.length) { message.warning('Select POs first'); return; }
+    let comment = '';
+    if (action === 'reject') {
+      const result = await new Promise((resolve) => {
+        let reason = '';
+        Modal.confirm({
+          title: 'Rejection Reason (required)',
+          content: <Input.TextArea rows={3} onChange={(e) => { reason = e.target.value; }} placeholder="Reason..." />,
+          onOk: () => resolve(reason),
+          onCancel: () => resolve(null),
+        });
+      });
+      if (!result) return;
+      comment = result;
+    }
+    setBulkLoading(true);
+    try {
+      const res = await api.bulkPOAction({ action, ids: selectedRowKeys, comment });
+      const r = res?.data;
+      message.success(`${r?.success || 0} POs ${action}ed${r?.failed ? `, ${r.failed} failed` : ''}`);
+      setSelectedRowKeys([]);
+      fetchOrders({ page: 1 });
+    } catch (err) { message.error(err?.message || 'Bulk action failed'); }
+    finally { setBulkLoading(false); }
+  };
 
   const fetchOrders = useCallback(async (params = {}) => {
     setLoading(true);
@@ -174,11 +203,27 @@ export default function PurchaseOrdersPage() {
           <Button icon={<ReloadOutlined />} onClick={() => { setSearch(''); setStatusFilter('all'); setDateRange(null); fetchOrders({ page: 1 }); }}>Reset</Button>
         </div>
 
+        {selectedRowKeys.length > 0 && (
+          <div className="flex items-center gap-3 mb-3 p-3 rounded-lg" style={{ backgroundColor: 'var(--accent-softer)', border: '1px solid var(--accent)' }}>
+            <Text strong style={{ color: 'var(--accent)' }}>{selectedRowKeys.length} selected</Text>
+            <Button size="small" icon={<CheckCircleOutlined />} loading={bulkLoading} onClick={() => handleBulkAction('approve')}
+              style={{ background: '#52c41a', borderColor: '#52c41a', color: '#fff' }}
+            >Approve All</Button>
+            <Button size="small" danger icon={<CloseCircleOutlined />} loading={bulkLoading} onClick={() => handleBulkAction('reject')}>Reject All</Button>
+            <Button size="small" icon={<StopOutlined />} loading={bulkLoading} onClick={() => handleBulkAction('cancel')}>Cancel All</Button>
+            <Button size="small" type="text" onClick={() => setSelectedRowKeys([])}>Clear</Button>
+          </div>
+        )}
+
         <Table
           dataSource={orders}
           columns={columns}
           rowKey="_id"
           loading={loading}
+          rowSelection={{
+            selectedRowKeys,
+            onChange: setSelectedRowKeys,
+          }}
           pagination={{
             current: pagination.page,
             pageSize: pagination.limit,

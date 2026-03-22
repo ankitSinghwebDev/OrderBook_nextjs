@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { Card, Statistic, Table, Tag, Typography, Spin, Empty, message } from 'antd';
 import { ShoppingCartOutlined, CheckCircleOutlined, ClockCircleOutlined, CloseCircleOutlined, TeamOutlined, AlertOutlined } from '@ant-design/icons';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from 'recharts';
 import Link from 'next/link';
 import { api } from '@/lib/api';
 
@@ -83,52 +84,100 @@ export default function DashboardPage() {
               title={<span style={{ color: 'var(--muted)' }}>{s.title}</span>}
               value={s.value}
               prefix={<span style={{ color: s.color }}>{s.icon}</span>}
-              valueStyle={{ color: 'var(--foreground)' }}
+              styles={{ content: { color: 'var(--foreground)' } }}
             />
           </Card>
         ))}
       </div>
 
+      {/* Charts Row */}
       <div className="grid gap-6 lg:grid-cols-2">
-        <Card title="Total Spend by Status" style={{ background: 'var(--card)', borderColor: 'var(--border)' }}>
-          <div className="space-y-3">
-            <div className="flex justify-between text-lg font-bold">
-              <Text>Total Spend</Text>
-              <Text>${totalSpend.toLocaleString(undefined, { minimumFractionDigits: 2 })}</Text>
-            </div>
-            {spendByStatus?.map((s) => (
-              <div key={s._id} className="flex items-center justify-between">
-                <Tag color={STATUS_COLORS[s._id]}>{s._id?.toUpperCase()}</Tag>
-                <div className="text-right">
-                  <Text strong>${s.totalSpend?.toLocaleString(undefined, { minimumFractionDigits: 2 })}</Text>
-                  <Text type="secondary" className="ml-2">({s.count} POs)</Text>
-                </div>
-              </div>
-            ))}
-          </div>
+        {/* Monthly Spend Bar Chart */}
+        <Card title="Monthly Spend Trend" style={{ background: 'var(--card)', borderColor: 'var(--border)' }}>
+          {data.monthlySpend?.length ? (
+            <ResponsiveContainer width="100%" height={280}>
+              <BarChart data={data.monthlySpend.reverse().map((m) => ({
+                month: `${['', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][m._id.month]} ${m._id.year}`,
+                spend: m.totalSpend,
+                count: m.count,
+              }))}>
+                <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
+                <XAxis dataKey="month" tick={{ fill: 'var(--muted)', fontSize: 11 }} />
+                <YAxis tick={{ fill: 'var(--muted)', fontSize: 11 }} />
+                <RechartsTooltip
+                  contentStyle={{ backgroundColor: 'var(--card)', border: '1px solid var(--border)', borderRadius: 8 }}
+                  labelStyle={{ color: 'var(--foreground)' }}
+                  formatter={(v) => [`$${v.toLocaleString()}`, 'Spend']}
+                />
+                <Bar dataKey="spend" fill="var(--accent)" radius={[4, 4, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          ) : <Empty description="No spend data yet" />}
         </Card>
 
+        {/* Spend by Status Pie Chart */}
+        <Card title="Spend by Status" style={{ background: 'var(--card)', borderColor: 'var(--border)' }}>
+          {spendByStatus?.length ? (
+            <div>
+              <div className="flex justify-between text-lg font-bold mb-4">
+                <Text>Total Spend</Text>
+                <Text style={{ color: 'var(--accent)' }}>${totalSpend.toLocaleString(undefined, { minimumFractionDigits: 2 })}</Text>
+              </div>
+              <ResponsiveContainer width="100%" height={220}>
+                <PieChart>
+                  <Pie data={spendByStatus.map((s) => ({ name: s._id, value: s.totalSpend, count: s.count }))}
+                    cx="50%" cy="50%" innerRadius={50} outerRadius={80} paddingAngle={3} dataKey="value"
+                    label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                  >
+                    {spendByStatus.map((s, i) => (
+                      <Cell key={s._id} fill={['#4f46e5', '#22c55e', '#f97316', '#ef4444', '#64748b'][i % 5]} />
+                    ))}
+                  </Pie>
+                  <RechartsTooltip formatter={(v) => `$${v.toLocaleString()}`}
+                    contentStyle={{ backgroundColor: 'var(--card)', border: '1px solid var(--border)', borderRadius: 8 }}
+                  />
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
+          ) : <Empty description="No data yet" />}
+        </Card>
+      </div>
+
+      {/* Top Suppliers */}
+      <div className="grid gap-6 lg:grid-cols-2">
         <Card title="Top Suppliers by Spend" style={{ background: 'var(--card)', borderColor: 'var(--border)' }}>
           {topSuppliers?.length ? (
-            <div className="space-y-3">
-              {topSuppliers.map((s, idx) => (
-                <div key={s._id} className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <span className="inline-flex h-6 w-6 items-center justify-center rounded-full text-xs font-bold" style={{ background: 'var(--accent-soft)', color: 'var(--accent)' }}>
-                      {idx + 1}
-                    </span>
-                    <Text>{s._id}</Text>
+            <ResponsiveContainer width="100%" height={220}>
+              <BarChart data={topSuppliers.map((s) => ({ name: s._id?.length > 15 ? s._id.slice(0, 15) + '...' : s._id, spend: s.totalSpend, count: s.count }))} layout="vertical">
+                <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
+                <XAxis type="number" tick={{ fill: 'var(--muted)', fontSize: 11 }} />
+                <YAxis type="category" dataKey="name" width={120} tick={{ fill: 'var(--muted)', fontSize: 11 }} />
+                <RechartsTooltip formatter={(v) => [`$${v.toLocaleString()}`, 'Spend']}
+                  contentStyle={{ backgroundColor: 'var(--card)', border: '1px solid var(--border)', borderRadius: 8 }}
+                />
+                <Bar dataKey="spend" fill="#22c55e" radius={[0, 4, 4, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          ) : <Empty description="No supplier data yet" />}
+        </Card>
+
+        <Card title="PO Status Distribution" style={{ background: 'var(--card)', borderColor: 'var(--border)' }}>
+          <div className="space-y-3">
+            {spendByStatus?.map((s) => {
+              const pct = totalSpend > 0 ? (s.totalSpend / totalSpend * 100).toFixed(1) : 0;
+              return (
+                <div key={s._id}>
+                  <div className="flex items-center justify-between mb-1">
+                    <Tag color={STATUS_COLORS[s._id]}>{s._id?.toUpperCase()}</Tag>
+                    <Text type="secondary">{s.count} POs - ${s.totalSpend?.toLocaleString(undefined, { minimumFractionDigits: 2 })}</Text>
                   </div>
-                  <div className="text-right">
-                    <Text strong>${s.totalSpend?.toLocaleString(undefined, { minimumFractionDigits: 2 })}</Text>
-                    <Text type="secondary" className="ml-2">({s.count} POs)</Text>
+                  <div className="w-full rounded-full h-2" style={{ backgroundColor: 'var(--border)' }}>
+                    <div className="rounded-full h-2 transition-all" style={{ width: `${pct}%`, backgroundColor: 'var(--accent)' }} />
                   </div>
                 </div>
-              ))}
-            </div>
-          ) : (
-            <Empty description="No supplier data yet" />
-          )}
+              );
+            })}
+          </div>
         </Card>
       </div>
 

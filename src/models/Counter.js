@@ -25,4 +25,15 @@ export async function getNextPONumber(workspaceId) {
   return `PO-${year}-${String(counter.seq).padStart(4, '0')}`;
 }
 
+export async function getNextGRNNumber(workspaceId) {
+  const year = new Date().getFullYear();
+  const counterId = `grn_${workspaceId}_${year}`;
+  const counter = await Counter.findByIdAndUpdate(
+    counterId,
+    { $inc: { seq: 1 } },
+    { new: true, upsert: true }
+  );
+  return `GRN-${year}-${String(counter.seq).padStart(4, '0')}`;
+}
+
 export default Counter;

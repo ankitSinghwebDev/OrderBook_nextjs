@@ -2,9 +2,10 @@
 
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { Card, Tag, Button, Space, Typography, Divider, Table, Timeline, Modal, Input, message, Descriptions, Spin, Empty } from 'antd';
-import { EditOutlined, CheckCircleOutlined, CloseCircleOutlined, ArrowLeftOutlined, StopOutlined, SendOutlined } from '@ant-design/icons';
+import { Card, Tag, Button, Space, Typography, Divider, Table, Timeline, Modal, Input, message, Descriptions, Spin, Empty, Alert, Tooltip } from 'antd';
+import { EditOutlined, CheckCircleOutlined, CloseCircleOutlined, ArrowLeftOutlined, StopOutlined, SendOutlined, ExclamationCircleOutlined, DownloadOutlined, MailOutlined, InboxOutlined } from '@ant-design/icons';
 import { api } from '@/lib/api';
+import POComments from '@/components/POComments';
 
 const { Title, Text, Paragraph } = Typography;
 
@@ -33,7 +34,33 @@ export default function PurchaseOrderDetailPage() {
   const [actionLoading, setActionLoading] = useState(false);
   const [rejectModalOpen, setRejectModalOpen] = useState(false);
   const [approveModalOpen, setApproveModalOpen] = useState(false);
+  const [emailModalOpen, setEmailModalOpen] = useState(false);
+  const [emailData, setEmailData] = useState({ recipientEmail: '', subject: '', message: '' });
+  const [emailSending, setEmailSending] = useState(false);
   const [comment, setComment] = useState('');
+
+  const handleDownloadPdf = async () => {
+    try {
+      const { generatePOPdf } = await import('@/lib/generatePOPdf');
+      const doc = generatePOPdf(po);
+      doc.save(`${po.orderNumber}.pdf`);
+      message.success('PDF downloaded');
+    } catch (err) {
+      message.error('Failed to generate PDF');
+    }
+  };
+
+  const handleEmailPO = async () => {
+    if (!emailData.recipientEmail) { message.error('Enter recipient email'); return; }
+    setEmailSending(true);
+    try {
+      const res = await api.emailPOToSupplier(id, emailData);
+      message.success(res?.message || 'Email sent');
+      setEmailModalOpen(false);
+      setEmailData({ recipientEmail: '', subject: '', message: '' });
+    } catch (err) { message.error(err?.message || 'Failed to send email'); }
+    finally { setEmailSending(false); }
+  };
 
   const fetchPO = async () => {
     setLoading(true);
@@ -91,10 +118,11 @@ export default function PurchaseOrderDetailPage() {
   const isApprover = po.approverUserId === userId;
   const isAdmin = userRole === 'admin';
   const canApprove = (isApprover || isAdmin) && po.status === 'pending';
-  const canEdit = ['draft', 'pending'].includes(po.status);
+  const isCreator = po.createdByUserId === userId;
+  const canEdit = ['draft', 'pending', 'rejected'].includes(po.status);
   const canSubmit = po.status === 'draft';
   const canCancel = ['draft', 'pending', 'approved'].includes(po.status);
-  const canResubmit = po.status === 'rejected';
+  const canResubmit = po.status === 'rejected' && (isCreator || isAdmin);
 
   return (
     <div className="space-y-6">
@@ -116,7 +144,20 @@ export default function PurchaseOrderDetailPage() {
             <Button icon={<SendOutlined />} type="primary" loading={actionLoading} onClick={() => handleAction('submit')}>Submit for Approval</Button>
           )}
           {canResubmit && (
-            <Button icon={<SendOutlined />} type="primary" loading={actionLoading} onClick={() => handleAction('submit')}>Resubmit</Button>
+            <>
+              <Button icon={<EditOutlined />} onClick={() => router.push(`/purchase-orders/${id}/edit`)}>Edit & Fix</Button>
+              <Button icon={<SendOutlined />} type="primary" loading={actionLoading}
+                onClick={() => {
+                  Modal.confirm({
+                    title: 'Resubmit this PO for approval?',
+                    icon: <ExclamationCircleOutlined />,
+                    content: 'The PO will be sent back to the approver. Make sure you have addressed the rejection reason before resubmitting.',
+                    okText: 'Yes, Resubmit',
+                    onOk: () => handleAction('submit'),
+                  });
+                }}
+              >Resubmit for Approval</Button>
+            </>
           )}
           {canApprove && (
             <>
@@ -135,8 +176,59 @@ export default function PurchaseOrderDetailPage() {
               });
             }}>Cancel PO</Button>
           )}
+          <Tooltip title="Download PDF"><Button icon={<DownloadOutlined />} onClick={handleDownloadPdf}>PDF</Button></Tooltip>
+          <Tooltip title="Email to Supplier"><Button icon={<MailOutlined />} onClick={() => setEmailModalOpen(true)}>Email</Button></Tooltip>
+          {po.status === 'approved' && (
+            <Button icon={<InboxOutlined />} onClick={() => router.push(`/grn/new?poId=${id}`)}>Create GRN</Button>
+          )}
         </Space>
       </div>
+
+      {/* Rejection Banner */}
+      {po.status === 'rejected' && po.rejectionReason && (
+        <Alert
+          type="error"
+          showIcon
+          icon={<CloseCircleOutlined />}
+          message={<Text strong>This PO was rejected</Text>}
+          description={
+            <div>
+              <Paragraph style={{ margin: '4px 0 8px' }}>{po.rejectionReason}</Paragraph>
+              <div className="flex items-center gap-2 text-xs" style={{ color: 'var(--muted)' }}>
+                {po.rejectedAt && <span>Rejected on {new Date(po.rejectedAt).toLocaleDateString()}</span>}
+                {po.approverName && <span>by {po.approverName}</span>}
+              </div>
+              {canResubmit && (
+                <div className="mt-3 flex gap-2">
+                  <Button size="small" icon={<EditOutlined />} onClick={() => router.push(`/purchase-orders/${id}/edit`)}>Edit & Fix Issues</Button>
+                  <Button size="small" type="primary" icon={<SendOutlined />} loading={actionLoading}
+                    onClick={() => handleAction('submit')}
+                  >Resubmit As-Is</Button>
+                </div>
+              )}
+            </div>
+          }
+        />
+      )}
+
+      {/* Approval Banner */}
+      {po.status === 'approved' && po.approvalComment && (
+        <Alert
+          type="success"
+          showIcon
+          icon={<CheckCircleOutlined />}
+          message={<Text strong>Approved</Text>}
+          description={
+            <div>
+              <Paragraph style={{ margin: '4px 0' }}>{po.approvalComment}</Paragraph>
+              <div className="text-xs" style={{ color: 'var(--muted)' }}>
+                {po.approvedAt && <span>Approved on {new Date(po.approvedAt).toLocaleDateString()}</span>}
+                {po.approverName && <span> by {po.approverName}</span>}
+              </div>
+            </div>
+          }
+        />
+      )}
 
       <div className="grid gap-6 lg:grid-cols-3">
         <Card title="PO Details" style={{ background: 'var(--card)', borderColor: 'var(--border)' }} className="lg:col-span-2">
@@ -237,15 +329,63 @@ export default function PurchaseOrderDetailPage() {
       <Modal
         title="Reject Purchase Order"
         open={rejectModalOpen}
-        onOk={() => handleAction('reject', comment)}
+        onOk={() => {
+          if (!comment.trim()) { message.warning('Please provide a reason for rejection'); return; }
+          handleAction('reject', comment);
+        }}
         onCancel={() => { setRejectModalOpen(false); setComment(''); }}
         confirmLoading={actionLoading}
         okText="Reject"
-        okButtonProps={{ danger: true }}
+        okButtonProps={{ danger: true, disabled: !comment.trim() }}
       >
-        <p>Please provide a reason for rejection:</p>
-        <Input.TextArea rows={3} value={comment} onChange={(e) => setComment(e.target.value)} placeholder="Reason for rejection..." />
+        <p style={{ color: 'var(--foreground)' }}>Please provide a reason for rejection <Text type="danger">*</Text></p>
+        <Input.TextArea
+          rows={4}
+          value={comment}
+          onChange={(e) => setComment(e.target.value)}
+          placeholder="e.g. Price too high, wrong specifications, need alternative supplier..."
+          status={!comment.trim() ? 'error' : undefined}
+        />
+        <Text type="secondary" className="text-xs mt-2 block">The creator will see this reason and can edit & resubmit the PO.</Text>
       </Modal>
+
+      {/* Email PO Modal */}
+      <Modal
+        title="Email PO to Supplier"
+        open={emailModalOpen}
+        onOk={handleEmailPO}
+        onCancel={() => setEmailModalOpen(false)}
+        confirmLoading={emailSending}
+        okText="Send Email"
+      >
+        <div className="space-y-3 mt-3">
+          <div>
+            <Text strong style={{ color: 'var(--foreground)' }}>Recipient Email *</Text>
+            <Input className="mt-1" value={emailData.recipientEmail}
+              onChange={(e) => setEmailData((d) => ({ ...d, recipientEmail: e.target.value }))}
+              placeholder="supplier@company.com"
+            />
+          </div>
+          <div>
+            <Text strong style={{ color: 'var(--foreground)' }}>Subject</Text>
+            <Input className="mt-1" value={emailData.subject}
+              onChange={(e) => setEmailData((d) => ({ ...d, subject: e.target.value }))}
+              placeholder={`Purchase Order ${po?.orderNumber}`}
+            />
+          </div>
+          <div>
+            <Text strong style={{ color: 'var(--foreground)' }}>Message</Text>
+            <Input.TextArea className="mt-1" rows={3} value={emailData.message}
+              onChange={(e) => setEmailData((d) => ({ ...d, message: e.target.value }))}
+              placeholder="Please find attached the purchase order..."
+            />
+          </div>
+          <Text type="secondary" className="text-xs">The PO PDF will be attached automatically.</Text>
+        </div>
+      </Modal>
+
+      {/* Comments */}
+      <POComments poId={id} />
     </div>
   );
 }

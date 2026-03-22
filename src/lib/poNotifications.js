@@ -1,7 +1,7 @@
 import { sendMail } from './email';
 import User from '../models/User';
 
-const APP_URL = process.env.APP_URL || process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+const APP_URL = process.env.APP_URL || 'http://localhost:3000';
 
 export async function notifyApproverNewPO(po) {
   if (!po.approverUserId) return;

@@ -38,6 +38,8 @@ export const config = {
     '/suppliers/:path*',
     '/addresses/:path*',
     '/approvals/:path*',
+    '/grn/:path*',
+    '/supplier-portal/:path*',
     '/bot/:path*',
   ],
 };

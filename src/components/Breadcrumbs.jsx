@@ -12,6 +12,8 @@ const titleMap = {
   approvals: 'Approvals',
   suppliers: 'Suppliers',
   addresses: 'Delivery Addresses',
+  grn: 'Goods Received Notes',
+  'supplier-portal': 'Supplier Portal',
   bot: 'Bot',
   login: 'Login',
   signup: 'Signup',

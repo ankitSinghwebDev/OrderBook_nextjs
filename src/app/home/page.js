@@ -17,6 +17,8 @@ export default function Home() {
 
 function HomeContent() {
   const [joinOpen, setJoinOpen] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [form, setForm] = useState({
     name: '',
     email: '',
@@ -79,7 +81,7 @@ function HomeContent() {
         window.localStorage.setItem('userEmail', res.user.email || '');
         window.localStorage.setItem('userName', res.user.name || '');
         window.localStorage.setItem('workspaceId', res?.workspace?.workspaceId || '');
-        router.replace('/workspace');
+        router.replace('/dashboard');
         return;
       }
       setJoinMessage(`Joined workspace ${res?.workspace?.name || ''}. You can now log in.`);
@@ -368,66 +370,100 @@ function HomeContent() {
       </section>
 
       {joinOpen && (
-        <div className="fixed  w-full inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4">
           <div
-            className="w-full max-w-md rounded-2xl border p-6 shadow-lg"
+            className="w-full max-w-lg rounded-2xl border p-8 shadow-xl"
             style={{ backgroundColor: 'var(--card)', borderColor: 'var(--border)' }}
           >
-            <div className="flex items-start justify-between">
+            <div className="flex items-start justify-between mb-6">
               <div>
                 <p className="text-xs font-semibold uppercase tracking-[0.18em]" style={{ color: 'var(--muted)' }}>
                   Join workspace
                 </p>
-                <h3 className="mt-2 text-xl font-semibold" style={{ color: 'var(--foreground)' }}>
-                  Enter invite code
+                <h3 className="mt-1 text-xl font-semibold" style={{ color: 'var(--foreground)' }}>
+                  Enter your details
                 </h3>
               </div>
               <button
                 type="button"
                 onClick={() => setJoinOpen(false)}
-                className="text-sm font-semibold"
+                className="rounded-md p-1 hover:opacity-70 transition"
                 style={{ color: 'var(--muted)' }}
               >
                 ✕
               </button>
             </div>
 
-            <form className="mt-6 space-y-4" onSubmit={handleJoin}>
+            <form className="space-y-5" onSubmit={handleJoin}>
+              {/* Invite Code — first, prominent */}
               <div>
-                <label className="block text-sm font-medium" style={{ color: 'var(--foreground)' }}>
-                  Full name
+                <label className="block text-sm font-medium mb-1.5" style={{ color: 'var(--foreground)' }}>
+                  Invite Code
                 </label>
-                <input
-                  required
-                  value={form.name}
-                  onChange={(e) => updateField('name', e.target.value)}
-                  className="mt-1 w-full rounded-md border px-3 py-2"
-                  style={{ borderColor: 'var(--border)', backgroundColor: 'color-mix(in srgb, var(--card) 94%, transparent)', color: 'var(--foreground)' }}
-                />
+                <div className="relative">
+                  <input
+                    required
+                    value={form.joinCode}
+                    onChange={(e) => updateField('joinCode', e.target.value.toUpperCase())}
+                    placeholder="e.g. AB1C2D"
+                    className="w-full rounded-lg border px-4 py-2.5 text-lg font-mono tracking-widest"
+                    style={{ borderColor: 'var(--border)', backgroundColor: 'var(--background)', color: 'var(--foreground)' }}
+                  />
+                  {form.joinCode && (
+                    <button
+                      type="button"
+                      onClick={() => updateField('joinCode', '')}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full p-0.5 hover:opacity-70"
+                      style={{ color: 'var(--muted)' }}
+                    >
+                      ✕
+                    </button>
+                  )}
+                </div>
               </div>
-              <div>
-                <label className="block text-sm font-medium" style={{ color: 'var(--foreground)' }}>
-                  Email
-                </label>
-                <input
-                  type="email"
-                  required
-                  value={form.email}
-                  onChange={(e) => updateField('email', e.target.value)}
-                  className="mt-1 w-full rounded-md border px-3 py-2"
-                  style={{ borderColor: 'var(--border)', backgroundColor: 'color-mix(in srgb, var(--card) 94%, transparent)', color: 'var(--foreground)' }}
-                />
+
+              {/* Name & Email — side by side */}
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div>
+                  <label className="block text-sm font-medium mb-1.5" style={{ color: 'var(--foreground)' }}>
+                    Full Name
+                  </label>
+                  <input
+                    required
+                    value={form.name}
+                    onChange={(e) => updateField('name', e.target.value)}
+                    placeholder="Your name"
+                    className="w-full rounded-lg border px-3 py-2.5"
+                    style={{ borderColor: 'var(--border)', backgroundColor: 'var(--background)', color: 'var(--foreground)' }}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-1.5" style={{ color: 'var(--foreground)' }}>
+                    Email
+                  </label>
+                  <input
+                    type="email"
+                    required
+                    value={form.email}
+                    onChange={(e) => updateField('email', e.target.value)}
+                    placeholder="you@company.com"
+                    className="w-full rounded-lg border px-3 py-2.5"
+                    style={{ borderColor: 'var(--border)', backgroundColor: 'var(--background)', color: 'var(--foreground)' }}
+                  />
+                </div>
               </div>
+
+              {/* Role */}
               <div>
-                <label className="block text-sm font-medium" style={{ color: 'var(--foreground)' }}>
+                <label className="block text-sm font-medium mb-1.5" style={{ color: 'var(--foreground)' }}>
                   Role
                 </label>
                 <select
                   required
                   value={form.role}
                   onChange={(e) => updateField('role', e.target.value)}
-                  className="mt-1 w-full rounded-md border px-3 py-2"
-                  style={{ borderColor: 'var(--border)', backgroundColor: 'color-mix(in srgb, var(--card) 94%, transparent)', color: 'var(--foreground)' }}
+                  className="w-full rounded-lg border px-3 py-2.5"
+                  style={{ borderColor: 'var(--border)', backgroundColor: 'var(--background)', color: 'var(--foreground)' }}
                 >
                   {roleOptions.map((option) => (
                     <option key={option.value} value={option.value}>
@@ -436,59 +472,71 @@ function HomeContent() {
                   ))}
                 </select>
               </div>
-              <div>
-                <label className="block text-sm font-medium" style={{ color: 'var(--foreground)' }}>
-                  Invite code
-                </label>
-                <input
-                  required
-                  value={form.joinCode}
-                  onChange={(e) => updateField('joinCode', e.target.value.toUpperCase())}
-                  className="mt-1 w-full rounded-md border px-3 py-2"
-                  style={{ borderColor: 'var(--border)', backgroundColor: 'color-mix(in srgb, var(--card) 94%, transparent)', color: 'var(--foreground)' }}
-                />
-              </div>
-              <div className="grid gap-3 sm:grid-cols-2">
+
+              {/* Password & Confirm — side by side with show/hide */}
+              <div className="grid gap-4 sm:grid-cols-2">
                 <div>
-                  <label className="block text-sm font-medium" style={{ color: 'var(--foreground)' }}>
-                    Set password (for future logins)
+                  <label className="block text-sm font-medium mb-1.5" style={{ color: 'var(--foreground)' }}>
+                    Password
                   </label>
-                  <input
-                    type="password"
-                    required
-                    minLength={8}
-                    value={form.password}
-                    onChange={(e) => updateField('password', e.target.value)}
-                    className="mt-1 w-full rounded-md border px-3 py-2"
-                    placeholder="Min 8 characters"
-                    style={{ borderColor: 'var(--border)', backgroundColor: 'color-mix(in srgb, var(--card) 94%, transparent)', color: 'var(--foreground)' }}
-                  />
+                  <div className="relative">
+                    <input
+                      type={showPassword ? 'text' : 'password'}
+                      required
+                      minLength={8}
+                      value={form.password}
+                      onChange={(e) => updateField('password', e.target.value)}
+                      placeholder="Min 8 characters"
+                      className="w-full rounded-lg border px-3 py-2.5 pr-10"
+                      style={{ borderColor: 'var(--border)', backgroundColor: 'var(--background)', color: 'var(--foreground)' }}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword((v) => !v)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-medium"
+                      style={{ color: 'var(--muted)' }}
+                    >
+                      {showPassword ? 'Hide' : 'Show'}
+                    </button>
+                  </div>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium" style={{ color: 'var(--foreground)' }}>
-                    Confirm password
+                  <label className="block text-sm font-medium mb-1.5" style={{ color: 'var(--foreground)' }}>
+                    Confirm Password
                   </label>
-                  <input
-                    type="password"
-                    required
-                    minLength={8}
-                    value={form.confirmPassword}
-                    onChange={(e) => updateField('confirmPassword', e.target.value)}
-                    className="mt-1 w-full rounded-md border px-3 py-2"
-                    style={{ borderColor: 'var(--border)', backgroundColor: 'color-mix(in srgb, var(--card) 94%, transparent)', color: 'var(--foreground)' }}
-                  />
+                  <div className="relative">
+                    <input
+                      type={showConfirmPassword ? 'text' : 'password'}
+                      required
+                      minLength={8}
+                      value={form.confirmPassword}
+                      onChange={(e) => updateField('confirmPassword', e.target.value)}
+                      placeholder="Re-enter password"
+                      className="w-full rounded-lg border px-3 py-2.5 pr-10"
+                      style={{ borderColor: 'var(--border)', backgroundColor: 'var(--background)', color: 'var(--foreground)' }}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowConfirmPassword((v) => !v)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-medium"
+                      style={{ color: 'var(--muted)' }}
+                    >
+                      {showConfirmPassword ? 'Hide' : 'Show'}
+                    </button>
+                  </div>
                 </div>
               </div>
+
               <button
                 type="submit"
                 disabled={joining}
-                className="w-full rounded-lg px-4 py-2 text-sm font-semibold transition-colors"
+                className="w-full rounded-lg px-4 py-3 text-sm font-semibold transition-colors mt-2"
                 style={{ backgroundColor: 'var(--accent)', color: '#fff', opacity: joining ? 0.7 : 1 }}
               >
-                {joining ? 'Joining…' : 'Join workspace'}
+                {joining ? 'Joining…' : 'Join Workspace'}
               </button>
               {joinMessage && (
-                <p className="text-sm" style={{ color: 'var(--muted)' }}>
+                <p className="text-sm text-center" style={{ color: 'var(--muted)' }}>
                   {joinMessage}
                 </p>
               )}

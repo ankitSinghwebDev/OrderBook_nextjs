@@ -380,8 +380,8 @@ export default function SignupPage() {
         state: "success",
         message: "Account created and workspace ready. Redirecting…",
       });
-      messageApi.success("Signed up! Taking you to your workspace.");
-      router.replace("/workspace");
+      messageApi.success("Signed up! Taking you to your dashboard.");
+      router.replace("/dashboard");
     } catch (error) {
       const errorMessage = getApiErrorMessage(
         error,

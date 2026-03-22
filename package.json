@@ -17,6 +17,8 @@
     "dotenv": "^17.3.1",
     "jose": "^5.2.3",
     "jsonwebtoken": "^9.0.2",
+    "jspdf": "^4.2.1",
+    "jspdf-autotable": "^5.0.7",
     "mongodb": "^7.1.0",
     "mongoose": "^8.9.1",
     "next": "^15.1.0",
@@ -24,6 +26,7 @@
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-redux": "^9.1.2",
+    "recharts": "^3.8.0",
     "zod": "^4.3.6"
   },
   "devDependencies": {

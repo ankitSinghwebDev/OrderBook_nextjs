@@ -32,7 +32,7 @@ export default function EditPurchaseOrderPage() {
         ]);
         const poData = poRes?.data;
         if (!poData) { message.error('PO not found'); router.push('/purchase-orders'); return; }
-        if (!['draft', 'pending'].includes(poData.status)) {
+        if (!['draft', 'pending', 'rejected'].includes(poData.status)) {
           message.warning('This PO cannot be edited');
           router.push(`/purchase-orders/${id}`);
           return;

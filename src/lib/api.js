@@ -85,6 +85,38 @@ export const api = {
   deleteAddress: (id) =>
     request(`/addresses/${id}`, { method: 'DELETE' }),
 
+  // PO PDF & Email
+  emailPOToSupplier: (id, payload = {}) =>
+    request(`/purchase-orders/${id}/email`, { method: 'POST', body: JSON.stringify(payload) }),
+
+  // PO Comments
+  listPOComments: (poId) =>
+    request(`/purchase-orders/${poId}/comments`),
+  addPOComment: (poId, message) =>
+    request(`/purchase-orders/${poId}/comments`, { method: 'POST', body: JSON.stringify({ message }) }),
+
+  // Bulk PO Actions
+  bulkPOAction: (payload) =>
+    request('/purchase-orders/bulk', { method: 'POST', body: JSON.stringify(payload) }),
+
+  // GRN
+  listGRNs: (params = {}) =>
+    request(`/grn${buildQuery(params)}`),
+  getGRN: (id) =>
+    request(`/grn/${id}`),
+  createGRN: (payload) =>
+    request('/grn', { method: 'POST', body: JSON.stringify(payload) }),
+
+  // Notifications
+  listNotifications: (params = {}) =>
+    request(`/notifications${buildQuery(params)}`),
+  markNotificationsRead: (payload) =>
+    request('/notifications', { method: 'PATCH', body: JSON.stringify(payload) }),
+
+  // Supplier Portal
+  getSupplierPortal: (params = {}) =>
+    request(`/supplier-portal${buildQuery(params)}`),
+
   // Dashboard
   getDashboard: () =>
     request('/dashboard'),

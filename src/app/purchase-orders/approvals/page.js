@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Card, Empty, List, Tag, Typography, Button, Space, Modal, Input, message, Spin } from 'antd';
+import { Card, Empty, Table, Tag, Typography, Button, Space, Modal, Input, message, Tooltip } from 'antd';
 import { CheckCircleOutlined, CloseCircleOutlined, EyeOutlined } from '@ant-design/icons';
 import { useRouter } from 'next/navigation';
 import { api } from '@/lib/api';
@@ -54,6 +54,55 @@ export default function ApprovalsPage() {
     }
   };
 
+  const columns = [
+    {
+      title: 'PO Number', dataIndex: 'orderNumber', key: 'orderNumber',
+      render: (text, record) => (
+        <a onClick={() => router.push(`/purchase-orders/${record._id}`)} style={{ color: 'var(--accent)', cursor: 'pointer' }}>
+          <Text strong>{text}</Text>
+        </a>
+      ),
+    },
+    { title: 'Supplier', dataIndex: 'supplier', key: 'supplier', ellipsis: true },
+    {
+      title: 'Total', dataIndex: 'total', key: 'total', align: 'right', width: 130,
+      render: (val, record) => <Text strong>{record.currency} {val?.toFixed(2)}</Text>,
+    },
+    { title: 'Items', key: 'items', width: 70, align: 'center', render: (_, r) => r.items?.length || 0 },
+    {
+      title: 'Created', dataIndex: 'createdAt', key: 'createdAt', width: 110,
+      render: (d) => new Date(d).toLocaleDateString(),
+    },
+    { title: 'By', dataIndex: 'createdByName', key: 'createdByName', ellipsis: true, width: 120 },
+    {
+      title: 'Status', dataIndex: 'status', key: 'status', width: 100,
+      render: (s) => <Tag color={STATUS_COLORS[s]}>{s?.toUpperCase()}</Tag>,
+    },
+    {
+      title: 'Actions', key: 'actions', width: 180, align: 'center',
+      render: (_, record) => (
+        <Space size={4}>
+          <Tooltip title="View"><Button type="text" size="small" icon={<EyeOutlined />} onClick={() => router.push(`/purchase-orders/${record._id}`)} /></Tooltip>
+          {record.status === 'pending' && (
+            <>
+              <Tooltip title="Approve">
+                <Button type="primary" size="small" icon={<CheckCircleOutlined />}
+                  style={{ background: '#52c41a', borderColor: '#52c41a' }}
+                  onClick={() => setActionModal({ open: true, action: 'approve', orderId: record._id })}
+                />
+              </Tooltip>
+              <Tooltip title="Reject">
+                <Button danger size="small" icon={<CloseCircleOutlined />}
+                  onClick={() => setActionModal({ open: true, action: 'reject', orderId: record._id })}
+                />
+              </Tooltip>
+            </>
+          )}
+        </Space>
+      ),
+    },
+  ];
+
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-4">
@@ -63,11 +112,8 @@ export default function ApprovalsPage() {
         </div>
         <Space>
           {['pending', 'approved', 'rejected', 'all'].map((s) => (
-            <Button
-              key={s}
-              type={statusFilter === s ? 'primary' : 'default'}
-              onClick={() => { setStatusFilter(s); fetchApprovals(s); }}
-              size="small"
+            <Button key={s} type={statusFilter === s ? 'primary' : 'default'}
+              onClick={() => { setStatusFilter(s); fetchApprovals(s); }} size="small"
             >
               {s.charAt(0).toUpperCase() + s.slice(1)}
             </Button>
@@ -76,48 +122,16 @@ export default function ApprovalsPage() {
       </div>
 
       <Card style={{ background: 'var(--card)', borderColor: 'var(--border)' }}>
-        {loading ? (
-          <div className="flex justify-center py-10"><Spin /></div>
-        ) : (
-          <List
-            dataSource={orders}
-            locale={{ emptyText: <Empty description="No approvals found" /> }}
-            renderItem={(order) => (
-              <List.Item
-                actions={[
-                  <Button key="view" type="text" icon={<EyeOutlined />} onClick={() => router.push(`/purchase-orders/${order._id}`)}>View</Button>,
-                  ...(order.status === 'pending' ? [
-                    <Button key="approve" type="primary" size="small" icon={<CheckCircleOutlined />}
-                      style={{ background: '#52c41a', borderColor: '#52c41a' }}
-                      onClick={() => setActionModal({ open: true, action: 'approve', orderId: order._id })}
-                    >Approve</Button>,
-                    <Button key="reject" danger size="small" icon={<CloseCircleOutlined />}
-                      onClick={() => setActionModal({ open: true, action: 'reject', orderId: order._id })}
-                    >Reject</Button>,
-                  ] : []),
-                ]}
-              >
-                <List.Item.Meta
-                  title={
-                    <div className="flex items-center gap-2">
-                      <Text strong>{order.orderNumber}</Text>
-                      <Text type="secondary">- {order.supplier}</Text>
-                      <Tag color={STATUS_COLORS[order.status]}>{order.status?.toUpperCase()}</Tag>
-                    </div>
-                  }
-                  description={
-                    <div className="flex flex-wrap gap-4 text-sm" style={{ color: 'var(--muted)' }}>
-                      <span>Total: {order.total?.toFixed?.(2)} {order.currency}</span>
-                      <span>Created: {new Date(order.createdAt).toLocaleDateString()}</span>
-                      {order.createdByName && <span>By: {order.createdByName}</span>}
-                      <span>Items: {order.items?.length || 0}</span>
-                    </div>
-                  }
-                />
-              </List.Item>
-            )}
-          />
-        )}
+        <Table
+          dataSource={orders}
+          columns={columns}
+          rowKey="_id"
+          loading={loading}
+          size="middle"
+          scroll={{ x: 800 }}
+          locale={{ emptyText: <Empty description="No approvals found" /> }}
+          pagination={{ pageSize: 20, showTotal: (total) => `${total} orders` }}
+        />
       </Card>
 
       <Modal
