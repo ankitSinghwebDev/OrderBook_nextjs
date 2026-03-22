@@ -74,7 +74,7 @@ export default function LoginPage() {
       }
       dispatch(setUser({ user: enrichedUser, token: data.token }));
       setStatus({ state: 'success', message: 'Welcome back!' });
-      router.replace('/dashboard');
+      setTimeout(() => { window.location.href = '/dashboard'; }, 500);
     } catch (error) {
       const errorMessage = getApiErrorMessage(error, 'Failed to login.');
       setStatus({ state: 'error', message: errorMessage });

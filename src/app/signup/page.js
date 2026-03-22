@@ -381,7 +381,7 @@ export default function SignupPage() {
         message: "Account created and workspace ready. Redirecting…",
       });
       messageApi.success("Signed up! Taking you to your dashboard.");
-      router.replace("/dashboard");
+      setTimeout(() => { window.location.href = "/dashboard"; }, 500);
     } catch (error) {
       const errorMessage = getApiErrorMessage(
         error,
