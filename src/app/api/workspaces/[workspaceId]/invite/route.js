@@ -61,7 +61,7 @@ export async function POST(req, { params }) {
 
     const url = new URL(req.url);
     const baseUrl =
-      process.env.NEXT_PUBLIC_APP_URL ||
+      process.env.APP_URL ||
       (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : `${url.protocol}//${url.host}`);
     const joinLink = `${baseUrl}/home?joinCode=${workspace.joinCode}&email=${encodeURIComponent(
       normalizedEmail

@@ -6,6 +6,9 @@ const PUBLIC_PATHS = ['/home', '/login', '/signup', '/forgot-password', '/reset-
 export async function middleware(req) {
   const { pathname } = req.nextUrl;
 
+  // Allow root path
+  if (pathname === '/') return NextResponse.next();
+
   if (PUBLIC_PATHS.some((p) => pathname.startsWith(p))) {
     return NextResponse.next();
   }
@@ -21,19 +24,22 @@ export async function middleware(req) {
       new TextEncoder().encode(process.env.JWT_SECRET || 'insecure_dev_secret_change_me')
     );
     return NextResponse.next();
-  } catch (err) {
+  } catch {
     return NextResponse.redirect(new URL('/login', req.url));
   }
 }
 
 export const config = {
   matcher: [
+    '/dashboard/:path*',
     '/workspace/:path*',
     '/create-new-po/:path*',
     '/purchase-orders/:path*',
     '/suppliers/:path*',
     '/addresses/:path*',
     '/approvals/:path*',
+    '/grn/:path*',
+    '/supplier-portal/:path*',
     '/bot/:path*',
   ],
 };

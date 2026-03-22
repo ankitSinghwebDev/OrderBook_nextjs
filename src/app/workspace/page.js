@@ -6,6 +6,7 @@ import { useSelector, useDispatch } from 'react-redux';
 import { setUser, setMembers } from '@/store/userSlice';
 import { useGetUserByIdQuery, useRegenerateJoinCodeMutation, useListWorkspaceMembersQuery } from '@/store/apiSlice';
 import { Drawer, message } from 'antd';
+import { api } from '@/lib/api';
 
 const actions = [
   { title: 'Create a new PO', href: '/create-new-po', desc: 'Start a fresh purchase order with items, supplier, and delivery details.' },
@@ -104,17 +105,12 @@ export default function WorkspacePage() {
     }
     setSendingInvite(true);
     try {
-      const res = await fetch(`/api/workspaces/${reduxUser.workspaceId}/invite`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          email: inviteForm.email,
-          role: inviteForm.role,
-          inviterUserId: reduxUser._id,
-        }),
+      const data = await api.sendWorkspaceInvite({
+        workspaceId: reduxUser.workspaceId,
+        email: inviteForm.email,
+        role: inviteForm.role,
+        inviterUserId: reduxUser._id,
       });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data?.message || 'Failed to send invite');
       if (data?.joinCode) {
         setInviteCode(data.joinCode);
         if (typeof window !== 'undefined') {
@@ -140,16 +136,10 @@ export default function WorkspacePage() {
     try {
       setAvatarUploading(true);
       // Step 1: get signed payload
-      const signRes = await fetch('/api/uploads', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          folder: process.env.NEXT_PUBLIC_CLOUDINARY_FOLDER || 'orderbook/avatars',
-          publicId: `user-${reduxUser._id}`,
-        }),
+      const payload = await api.signUpload({
+        folder: process.env.NEXT_PUBLIC_CLOUDINARY_FOLDER || 'orderbook/avatars',
+        publicId: `user-${reduxUser._id}`,
       });
-      if (!signRes.ok) throw new Error('Failed to sign upload');
-      const payload = await signRes.json();
 
       // Step 2: upload to Cloudinary directly
       const formData = new FormData();
@@ -172,16 +162,8 @@ export default function WorkspacePage() {
       const avatarUrl = uploadJson.secure_url;
 
       // Step 3: persist on user record
-      const patchRes = await fetch(`/api/users/${reduxUser._id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ avatarUrl }),
-      });
-      if (!patchRes.ok) throw new Error('Failed to save avatar');
-      const updated = await patchRes.json();
-      if (updated?.user) {
-        dispatch(setUser({ user: updated.user }));
-      }
+      const updated = await api.updateUser(reduxUser._id, { avatarUrl });
+      if (updated?.user) dispatch(setUser({ user: updated.user }));
     } catch (err) {
       console.error('Avatar upload failed', err);
       alert('Failed to upload avatar. Please try again.');

@@ -6,6 +6,7 @@ import { PlusCircleFilled, StarFilled } from "@ant-design/icons";
 import { useRouter } from "next/navigation";
 import { useRegisterMutation } from "@/store/apiSlice";
 import { getApiErrorMessage } from "@/utils/helpers";
+import { api } from "@/lib/api";
 
 const DEFAULT_REFERENCE_OPTIONS = {
   industries: [
@@ -243,19 +244,9 @@ export default function SignupPage() {
     async function loadReferenceData() {
       setOptionsLoading(true);
       try {
-        const country = encodeURIComponent(
+        const data = await api.getReferenceData(
           formValues.organizationLocation || "India",
         );
-        const res = await fetch(`/api/reference-data?country=${country}`, {
-          method: "GET",
-          cache: "no-store",
-        });
-
-        if (!res.ok) {
-          throw new Error("Failed to fetch reference data");
-        }
-
-        const data = await res.json();
         if (ignore) return;
 
         const nextOptions = {
@@ -389,8 +380,8 @@ export default function SignupPage() {
         state: "success",
         message: "Account created and workspace ready. Redirecting…",
       });
-      messageApi.success("Signed up! Taking you to your workspace.");
-      router.replace("/workspace");
+      messageApi.success("Signed up! Taking you to your dashboard.");
+      router.replace("/dashboard");
     } catch (error) {
       const errorMessage = getApiErrorMessage(
         error,

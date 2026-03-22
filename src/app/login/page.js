@@ -68,12 +68,13 @@ export default function LoginPage() {
       window.localStorage.setItem('userId', enrichedUser?._id || '');
       window.localStorage.setItem('userEmail', enrichedUser?.email || '');
       window.localStorage.setItem('userName', enrichedUser?.name || '');
+      window.localStorage.setItem('userRole', enrichedUser?.role || 'viewer');
       if (enrichedUser?.workspaceId) {
         window.localStorage.setItem('workspaceId', enrichedUser.workspaceId);
       }
       dispatch(setUser({ user: enrichedUser, token: data.token }));
       setStatus({ state: 'success', message: 'Welcome back!' });
-      router.replace('/workspace');
+      router.replace('/dashboard');
     } catch (error) {
       const errorMessage = getApiErrorMessage(error, 'Failed to login.');
       setStatus({ state: 'error', message: errorMessage });

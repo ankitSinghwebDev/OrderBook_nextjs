@@ -1,4 +1,6 @@
+/** @type {import('next').NextConfig} */
 const nextConfig = {
+  reactStrictMode: false,
   images: {
     remotePatterns: [
       {
@@ -6,6 +8,9 @@ const nextConfig = {
         hostname: 'res.cloudinary.com',
       },
     ],
+  },
+  experimental: {
+    optimizePackageImports: ['antd', '@ant-design/icons'],
   },
 };
 
